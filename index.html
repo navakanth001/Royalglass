@@ -11,6 +11,8 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 @media(max-width:750px){.grid{grid-template-columns:repeat(2,1fr)}th:nth-child(3),td:nth-child(3){display:none}}
 @media print{body *{visibility:hidden}.labels,.labels *{visibility:visible}.labels{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff}.no-print{display:none!important}.labelgrid{padding:5mm;gap:4mm}.label{break-inside:avoid;page-break-inside:avoid}}
 .labels{display:none}.labelgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.label{height:30mm;border:1px dashed #aaa;padding:3mm;text-align:center;overflow:hidden;box-sizing:border-box}.labelgrid.a4{grid-template-columns:repeat(3,1fr)}.labelgrid.thermal{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.thermal .label{border:0;width:var(--label-w);height:var(--label-h);padding:2.5mm;margin:0 auto}.labelgrid.large .label{width:100mm;height:50mm}.labelgrid.medium .label{width:60mm;height:30mm}.labelgrid.small .label{width:50mm;height:25mm}.label .name{font-size:11px;font-weight:700}.label .sku{font-size:8px}.barcode-svg{width:100%;height:15mm;display:block}.code{font-size:8px;margin-top:1mm}.print-title{font-size:10px;font-weight:700;margin-bottom:1mm}
+</style><style id="low-stock-friendly">
+.field-help{font-size:12px;color:#697586;margin-top:-4px;padding:0 2px}.low-warning{display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-size:11px;font-weight:700;color:#b42318;background:#fff1f0;border:1px solid #f5c2bf;border-radius:999px;padding:3px 7px}.product-card.is-low .stock-box{background:#fff1f0;border:1px solid #f3c3c0}.product-card.is-low .stock-box strong{color:#b42318}.metric-card.low-stock-card{cursor:pointer}.metric-card.low-stock-card:active{transform:scale(.99)}
 </style><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <style id="camera-click-visibility">
@@ -213,7 +215,7 @@ button{min-width:44px}
 <div class="grid dashboard">
   <div class="card metric-card"><div class="metric-icon">📦</div><div><div class="muted">Products</div><div class="metric" id="mP">0</div></div></div>
   <div class="card metric-card"><div class="metric-icon">🔢</div><div><div class="muted">Total Quantity</div><div class="metric" id="mU">0</div></div></div>
-  <div class="card metric-card"><div class="metric-icon">⚠️</div><div><div class="muted">Low Stock</div><div class="metric" id="mL">0</div></div></div>
+  <div class="card metric-card low-stock-card" onclick="showLowStock()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showLowStock()}"><div class="metric-icon">⚠️</div><div><div class="muted">Low Stock</div><div class="metric" id="mL">0</div></div></div>
   <div class="card metric-card"><div class="metric-icon">₹</div><div><div class="muted">Stock Value</div><div class="metric metric-value" id="mV">₹0</div></div></div>
 </div>
 
@@ -246,13 +248,14 @@ button{min-width:44px}
 <dialog id="productDlg"><div class="dialog-head"><div><div class="eyebrow">PRODUCT</div><h2 id="dlgTitle">Add Product</h2></div><button class="icon-close secondary" onclick="productDlg.close()" aria-label="Close">✕</button></div><div class="form">
 <label>Product name<input id="name" placeholder="Example: Tata Salt 1kg"></label><label class="advanced-field">SKU<input id="sku"></label><label>Barcode<input id="barcode" placeholder="Scan or enter barcode"></label>
 <div class="two-fields"><label>Purchase price<input id="buy" type="number" min="0" step=".01" placeholder="0"></label><label>Selling price<input id="sell" type="number" min="0" step=".01" placeholder="0"></label></div>
-<div class="two-fields"><label>Current stock<input id="stock" type="number" min="0" step="1" placeholder="0"></label><label>Low stock alert<input id="low" type="number" min="0" step="1" value="5"></label></div>
+<div class="two-fields"><label>Current stock<input id="stock" type="number" min="0" step="1" placeholder="0"></label><label>Low stock warning<input id="low" type="number" min="0" step="1" value="5" aria-describedby="lowHelp"></label></div><div id="lowHelp" class="field-help">Show a warning when stock reaches this number or less.</div>
 </div><div class="actions"><button class="secondary" onclick="productDlg.close()">Cancel</button><button onclick="save()">Save Product</button></div></dialog>
 
 <section class="labels" id="labels"></section>
 
 <script>
 let currentPage = 1;
+let lowStockOnly = false;
 const PAGE_SIZE = 5;
 const selectedProductIds = new Set();
 
@@ -267,14 +270,14 @@ function putAll(){return new Promise((res,rej)=>{let t=db.transaction('products'
 function code(){let n=(products.length+1).toString().padStart(5,'0'),c='890'+n;while(products.some(p=>p.barcode===c)){n=(+n+1).toString().padStart(5,'0');c='890'+n}return c}
 function sk(){let n=(products.length+1).toString().padStart(5,'0'),c='P'+n;while(products.some(p=>p.sku===c)){n=(+n+1).toString().padStart(5,'0');c='P'+n}return c}
 function clearForm(){editing=null;$('dlgTitle').textContent='Add product';$('name').value='';$('sku').value=sk();$('barcode').value=code();$('buy').value=0;$('sell').value=0;$('stock').value=0;$('low').value=5}
-function edit(id){let p=products.find(x=>x.id===id);editing=id;$('dlgTitle').textContent='Edit product';for(let k of ['name','sku','barcode','buy','sell','stock','low'])$(k).value=p[k];productDlg.showModal()}
+function edit(id){let p=products.find(x=>x.id===id);editing=id;$('dlgTitle').textContent='Edit product';for(let k of ['name','sku','barcode','buy','sell','stock'])$(k).value=p[k];$('low').value=(p.low===undefined||p.low===null)?5:p.low;productDlg.showModal()}
 async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),buy:+$('buy').value||0,sell:+$('sell').value||0,stock:+$('stock').value||0,low:+$('low').value||0};if(!p.name||!p.sku||!p.barcode)return alert('Please enter the product name and barcode.');if(products.some(x=>x.sku===p.sku&&x.id!==p.id)||products.some(x=>x.barcode===p.barcode&&x.id!==p.id))return alert('This SKU or barcode is already used by another product.');const cameFromScan=!!pendingScannedBarcode&&normalizeBarcode(p.barcode)===normalizeBarcode(pendingScannedBarcode);if(editing)products=products.map(x=>x.id===editing?p:x);else products.push(p);await putAll();productDlg.close();render();if(cameFromScan){$('scanner').style.setProperty('display','block','important');scannedProductId=p.id;showScanResult(p);$('scanStatus').textContent='Product added: '+p.name+' — barcode '+p.barcode;pendingScannedBarcode=null;}else if(!editing){pendingScannedBarcode=null;}}
 async function stock(id,d){let p=products.find(x=>x.id===id);if(d<0&&p.stock<1)return alert('No stock available.');p.stock+=d;await putAll();render()}
 async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);selectedProductIds.delete(id);await putAll();render()}}
 function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){
   const query=String($('q')?.value||'').toLowerCase().trim();
-  const filtered=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v??'').toLowerCase().includes(query)));
+  const filtered=products.filter(p=>(!lowStockOnly || p.stock<=p.low)&&[p.name,p.sku,p.barcode].some(v=>String(v??'').toLowerCase().includes(query)));
   const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
   if(currentPage>totalPages) currentPage=totalPages;
   if(currentPage<1) currentPage=1;
@@ -282,7 +285,7 @@ function render(){
   const a=filtered.slice(begin,begin+PAGE_SIZE);
 
   $('rows').innerHTML=a.map(p=>`<tr class="${selectedProductIds.has(p.id)?'selected-row':''}"><td><input type="checkbox" aria-label="Select ${esc(p.name)}" ${selectedProductIds.has(p.id)?'checked':''} onchange="toggleProductSelection('${p.id}',this.checked)"></td><td><strong>${esc(p.name)}</strong></td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=7>No products yet. Tap “Add Product” above.</td></tr>';
-  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''} ${selectedProductIds.has(p.id)?'selected-card':''}"><div class="product-main compact-main"><label class="product-select" title="Select product"><input type="checkbox" aria-label="Select ${esc(p.name)}" ${selectedProductIds.has(p.id)?'checked':''} onchange="toggleProductSelection('${p.id}',this.checked)"></label><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-price">${fmt(p.sell)}</div></div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button aria-label="Decrease stock" title="Decrease stock" onclick="stock('${p.id}',-1)">− 1</button><button aria-label="Increase stock" title="Increase stock" onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" aria-label="Edit product" title="Edit product" onclick="edit('${p.id}')">✏️</button><button class="danger delete-icon" aria-label="Delete product" title="Delete product" onclick="del('${p.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h8m-7 0v11m6-11v11M9 4h6l1 3H8l1-3Zm-3 3h12l-1 14H7L6 7Z"/></svg></button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
+  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''} ${selectedProductIds.has(p.id)?'selected-card':''}"><div class="product-main compact-main"><label class="product-select" title="Select product"><input type="checkbox" aria-label="Select ${esc(p.name)}" ${selectedProductIds.has(p.id)?'checked':''} onchange="toggleProductSelection('${p.id}',this.checked)"></label><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-price">${fmt(p.sell)}</div>${p.stock<=p.low?`<div class="low-warning">⚠️ Low stock · alert at ${p.low}</div>`:''}</div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button aria-label="Decrease stock" title="Decrease stock" onclick="stock('${p.id}',-1)">− 1</button><button aria-label="Increase stock" title="Increase stock" onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" aria-label="Edit product" title="Edit product" onclick="edit('${p.id}')">✏️</button><button class="danger delete-icon" aria-label="Delete product" title="Delete product" onclick="del('${p.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h8m-7 0v11m6-11v11M9 4h6l1 3H8l1-3Zm-3 3h12l-1 14H7L6 7Z"/></svg></button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
 
   $('mP').textContent=products.length;
   $('mU').textContent=products.reduce((a,p)=>a+p.stock,0);
@@ -291,6 +294,8 @@ function render(){
 
   const info=$('pageInfo'), prev=$('prevPage'), next=$('nextPage');
   if(info) info.textContent=`Page ${currentPage} of ${totalPages} · ${filtered.length} products`;
+  const sectionHint=document.querySelector('.products-section .section-title .muted');
+  if(sectionHint) sectionHint.textContent=lowStockOnly?'Showing products that need restocking. Tap Low Stock above to show all products.':'Select products below when you want to print their barcodes.';
   if(prev) prev.disabled=currentPage<=1;
   if(next) next.disabled=currentPage>=totalPages;
   updateSelectionUI();
@@ -521,7 +526,9 @@ function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
 function manualScan(){const v=prompt('Enter barcode number:');if(v){const code=normalizeBarcode(v.trim());$('q').value=code;render();const p=findProductByBarcode(code);if(p)showScanResult(p);else{pendingScannedBarcode=code;clearForm();$('barcode').value=code;productDlg.showModal()}}}
 
-openDB().then(async()=>{products=await all();render()});
+openDB().then(async()=>{products=await all();let changed=false;products=products.map(p=>{if(p.low===undefined||p.low===null||Number.isNaN(Number(p.low))){changed=true;return {...p,low:5}}return {...p,low:Math.max(0,Number(p.low)||0)}});if(changed)await putAll();render()});
+function showLowStock(){const low=products.filter(p=>p.stock<=p.low);if(!low.length){alert('No products are low on stock right now.');return;}lowStockOnly=!lowStockOnly;currentPage=1;render();document.querySelector('.products-section')?.scrollIntoView({behavior:'smooth',block:'start'});}
+
 </script>
 <section class="card excel-card" id="excelTools">
   <details><summary>📊 <strong>Excel / Bulk Products</strong><span>For many products</span></summary>
