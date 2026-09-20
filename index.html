@@ -24,8 +24,6 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Inventory">
-
-<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
 </head>
 <body><div class="wrap">
 <header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
@@ -109,116 +107,99 @@ window.onafterprint=()=>{$('labels').innerHTML=''}
 window.addEventListener('pagehide',stopScanner)
 
 async function openScanner(){
-  const panel=$('scanner');
-  const video=$('camera');
-  const status=$('scanStatus');
-  const wrap=$('cameraWrap');
-  if(!panel || !video){ alert('Scanner panel is missing.'); return; }
-
+  const panel=$('scanner'), video=$('camera'), status=$('scanStatus'), wrap=$('cameraWrap');
+  if(!panel || !video) return;
   stopScanner();
-
   panel.style.setProperty('display','block','important');
   panel.hidden=false;
   if(wrap) wrap.style.display='block';
   video.style.setProperty('display','block','important');
-  video.style.width='100%';
-  video.style.height='min(60vw,360px)';
-  video.style.minHeight='220px';
-  video.style.objectFit='cover';
   video.setAttribute('playsinline','');
   video.setAttribute('autoplay','');
   video.muted=true;
   if($('cameraPlaceholder')) $('cameraPlaceholder').style.display='none';
-
   panel.scrollIntoView({behavior:'smooth',block:'center'});
-  if(status) status.textContent='Starting phone camera…';
 
   if(!window.isSecureContext && location.hostname!=='localhost'){
-    if(status) status.textContent='Camera requires the HTTPS version of this app. Open the GitHub Pages https:// address.';
+    status.textContent='Camera requires the HTTPS version of this app.';
     return;
   }
   if(!navigator.mediaDevices?.getUserMedia){
-    if(status) status.textContent='Camera access is not supported by this browser.';
+    status.textContent='Camera access is not supported by this browser.';
+    return;
+  }
+  if(!('BarcodeDetector' in window)){
+    status.textContent='This phone/browser does not support native barcode scanning. Please use the latest Chrome on Android.';
     return;
   }
 
   try{
-    // Let ZXing own the camera stream. This avoids two different camera
-    // streams fighting over the same <video>, which was causing the scanner
-    // to show a preview but never decode the Code 128 barcode.
-    if(!window.ZXingBrowser?.BrowserMultiFormatReader){
-      if(status) status.textContent='Barcode scanner library did not load. Check your internet connection and reload the app.';
-      return;
-    }
-
-    scannerRunning=true;
-    const reader = new ZXingBrowser.BrowserMultiFormatReader();
-    // This app generates Code 128 labels, so tell ZXing to focus on Code 128.
-    // This reduces false work and improves decoding of the app's own labels.
+    let formats=['code_128'];
     try{
-      if(window.ZXing?.BarcodeFormat?.CODE_128){
-        reader.possibleFormats=[window.ZXing.BarcodeFormat.CODE_128];
+      const supported=await BarcodeDetector.getSupportedFormats();
+      if(!supported.includes('code_128')){
+        status.textContent='This browser cannot scan Code 128 barcodes with its built-in scanner.';
+        return;
       }
     }catch(e){}
-    const controls = await reader.decodeFromConstraints(
-      {
-        audio:false,
-        video:{
-          facingMode:{ideal:'environment'},
-          width:{ideal:1280},
-          height:{ideal:720}
-        }
-      },
-      video,
-      async (result, error, controlsFromCallback) => {
-        if(!scannerRunning) return;
-        if(result){
-          const value=String(result.getText()||'').trim();
+
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    video.srcObject=scanStream;
+    await video.play();
+    scannerRunning=true;
+    const detector=new BarcodeDetector({formats});
+    status.textContent='Camera is on. Hold the Code 128 barcode steady inside the box.';
+
+    const scanLoop=async()=>{
+      if(!scannerRunning) return;
+      try{
+        const codes=await detector.detect(video);
+        if(codes && codes.length){
+          const value=String(codes[0].rawValue||'').trim();
           if(value){
-            window.__zxingControls=controlsFromCallback || controls;
+            scannerRunning=false;
             await handleScannedBarcode(value);
             stopScanner();
+            return;
           }
         }
-      }
-    );
-
-    window.__zxingControls=controls;
-    if(status) status.textContent='Camera is on. Hold the Code 128 barcode steady inside the box.';
+      }catch(e){}
+      window.__barcodeScanFrame=requestAnimationFrame(scanLoop);
+    };
+    window.__barcodeScanFrame=requestAnimationFrame(scanLoop);
   }catch(err){
     scannerRunning=false;
-    try{ if(window.__zxingControls) window.__zxingControls.stop(); }catch(e){}
-    window.__zxingControls=null;
-    const n=err?.name||'';
     if(status){
+      const n=err?.name||'';
       status.textContent =
-        n==='NotAllowedError' ? 'Camera permission denied. Allow Camera for this site in Chrome settings, then tap Scan Barcode again.' :
+        n==='NotAllowedError' ? 'Camera permission denied. Allow Camera for this site in Chrome settings, then try again.' :
         n==='NotFoundError' ? 'No camera was found on this device.' :
-        n==='NotReadableError' ? 'The camera is busy in another app. Close other camera/scanner apps and try again.' :
-        'Could not start barcode scanner: '+(err?.message||n||'unknown error');
+        n==='NotReadableError' ? 'The camera is busy in another app. Close other camera apps and try again.' :
+        'Could not start camera: '+(err?.message||n||'unknown error');
     }
   }
 }
 function stopScanner(){
   scannerRunning=false;
-  try{ if(window.__zxingControls) window.__zxingControls.stop(); }catch(e){}
-  window.__zxingControls=null;
+  if(window.__barcodeScanFrame){
+    cancelAnimationFrame(window.__barcodeScanFrame);
+    window.__barcodeScanFrame=null;
+  }
   if(scanStream){
     scanStream.getTracks().forEach(t=>t.stop());
     scanStream=null;
   }
   const video=$('camera');
   if(video){
-    try{ video.pause(); }catch(e){}
+    try{video.pause()}catch(e){}
     video.srcObject=null;
-    video.removeAttribute('src');
     video.style.display='none';
   }
   const wrap=$('cameraWrap');
-  if(wrap){
-    wrap.classList.remove('camera-live');
-    wrap.style.display='none';
-  }
+  if(wrap) wrap.style.display='none';
   const panel=$('scanner');
   if(panel){
     panel.style.setProperty('display','none','important');
@@ -227,6 +208,7 @@ function stopScanner(){
   const ph=$('cameraPlaceholder');
   if(ph) ph.style.display='';
 }
+
 
 function normalizeBarcode(value){
   let v=String(value??'').trim();
