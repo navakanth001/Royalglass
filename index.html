@@ -205,7 +205,7 @@ button{min-width:44px}
 
 /* Bottom navigation and simple app views */
 .app-view[hidden]{display:none!important}.home-only[hidden]{display:none!important}
-.page-heading{margin:6px 0 14px}.page-heading h2{margin:0 0 3px;font-size:24px}.history-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.filter-row{display:flex;gap:6px;overflow:auto}.filter-btn{background:#eaf2fb;color:#17324F;border:1px solid #d2dfec;border-radius:999px;min-height:40px;padding:8px 14px;white-space:nowrap;font-weight:600}.filter-btn.active{background:#0B4EA2;color:#fff;border-color:#0B4EA2}.history-list{display:flex;flex-direction:column;gap:8px}.history-item{background:#fff;border:1px solid #dde3eb;border-radius:12px;padding:11px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.history-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-time{font-size:12px;color:#697586;margin-top:2px}.history-change{font-size:17px;font-weight:800;text-align:right}.history-change.add{color:#16834b}.history-change.remove{color:#c62828}.history-stock{font-size:12px;color:#697586;text-align:right;margin-top:2px}.history-empty{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:28px 16px;text-align:center;color:#697586}.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:50;width:min(100%,760px);display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,255,255,.98);border-top:1px solid #dbe3ec;box-shadow:0 -4px 16px rgba(20,50,80,.08);padding:6px 8px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(8px)}.nav-item{background:transparent!important;color:#697586!important;border:0!important;min-height:54px;padding:5px 4px!important;border-radius:10px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600}.nav-item.active{color:#0B4EA2!important;background:#edf4fd!important}.nav-icon{font-size:23px;line-height:1}.wrap{padding-bottom:84px}.excel-card{margin-top:0}.excel-card.app-view{max-width:1100px}.excel-buttons button,.excel-buttons .btn{min-height:48px}
+.page-heading{margin:6px 0 14px}.page-heading h2{margin:0 0 3px;font-size:24px}.history-result-count{font-size:11px;color:#697586;font-weight:600;margin:0 0 6px}.history-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.filter-row{display:flex;gap:6px;overflow:auto}.filter-btn{background:#eaf2fb;color:#17324F;border:1px solid #d2dfec;border-radius:999px;min-height:40px;padding:8px 14px;white-space:nowrap;font-weight:600}.filter-btn.active{background:#0B4EA2;color:#fff;border-color:#0B4EA2}.history-list{display:flex;flex-direction:column;gap:8px}.history-item{background:#fff;border:1px solid #dde3eb;border-radius:12px;padding:11px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.history-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-time{font-size:12px;color:#697586;margin-top:2px}.history-change{font-size:17px;font-weight:800;text-align:right}.history-change.add{color:#16834b}.history-change.remove{color:#c62828}.history-stock{font-size:12px;color:#697586;text-align:right;margin-top:2px}.history-empty{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:28px 16px;text-align:center;color:#697586}.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:50;width:min(100%,760px);display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,255,255,.98);border-top:1px solid #dbe3ec;box-shadow:0 -4px 16px rgba(20,50,80,.08);padding:6px 8px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(8px)}.nav-item{background:transparent!important;color:#697586!important;border:0!important;min-height:54px;padding:5px 4px!important;border-radius:10px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600}.nav-item.active{color:#0B4EA2!important;background:#edf4fd!important}.nav-icon{font-size:23px;line-height:1}.wrap{padding-bottom:84px}.excel-card{margin-top:0}.excel-card.app-view{max-width:1100px}.excel-buttons button,.excel-buttons .btn{min-height:48px}
 @media(min-width:701px){.bottom-nav{width:520px;border-radius:16px 16px 0 0}.wrap{padding-bottom:82px}}
 @media(max-width:430px){.bottom-nav{padding-left:5px;padding-right:5px}.nav-item{font-size:10px}.nav-icon{font-size:21px}.page-heading h2{font-size:22px}.history-item{padding:10px}}
 </style>
@@ -245,7 +245,15 @@ button{min-width:44px}
 .history-tip-icon{font-size:22px;line-height:1}
 .history-tip strong{font-size:13px;color:#17324f}
 .history-tip p{margin:3px 0 0;color:#697586;font-size:11px;line-height:1.4}
+.history-list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:12px;font-weight:700;color:#243447}
+.history-sort-pill{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:999px;background:#f3f7fb;border:1px solid #e0e8f1;color:#526273;font-weight:600;white-space:nowrap}
+.history-sort-pill span{font-size:15px;color:#0B4EA2}
 @media(max-width:430px){.history-page-heading h2{font-size:24px!important}.filter-btn{min-height:38px;padding:7px 14px}.history-item{grid-template-columns:32px minmax(0,1fr) auto auto;padding:8px}.history-product-icon{width:32px;height:32px}.history-empty{padding-top:36px;padding-bottom:32px}}
+</style>
+
+<style id="v40-excel-polish">
+.excel-card{max-width:760px!important;margin:0 auto!important;padding:0 0 20px}.excel-hero{display:flex;align-items:center;gap:12px;padding:4px 0 16px;border-bottom:1px solid #e3e8ef;margin-bottom:14px}.excel-hero-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#eaf3ff;color:#0B4EA2;font-size:25px;font-weight:800}.excel-hero h2{margin:0;font-size:26px;line-height:1.1}.excel-hero p{margin:4px 0 0;color:#697586;font-size:14px}.excel-menu{display:flex;flex-direction:column;gap:10px}.excel-menu-item{width:100%;min-height:78px!important;display:grid;grid-template-columns:48px minmax(0,1fr) 24px;align-items:center;gap:12px;text-align:left;background:#fff!important;color:#17202a!important;border:1px solid #dce4ed!important;border-radius:14px!important;padding:12px!important;box-shadow:0 2px 7px rgba(20,50,80,.05);transition:transform .12s ease,box-shadow .12s ease}.excel-menu-item:active{transform:scale(.99)}.excel-menu-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-size:22px;font-weight:800;box-shadow:0 2px 5px rgba(0,0,0,.08)}.excel-import .excel-menu-icon{background:#22b55b}.excel-export .excel-menu-icon{background:#ef3d3d}.excel-template .excel-menu-icon{background:#0b73df}.excel-menu-copy strong{display:block;font-size:15px;line-height:1.2}.excel-menu-copy small{display:block;color:#697586;font-size:12px;line-height:1.35;margin-top:4px}.excel-arrow{font-size:28px;color:#9aa5b1;text-align:center;font-weight:400}.excel-tip,.excel-note{display:flex;gap:11px;margin-top:12px;padding:13px 14px;border-radius:14px}.excel-tip{background:#eef5ff;color:#17324f}.excel-note{background:#f8fafc;border:1px solid #e1e7ef}.excel-tip .tip-icon{font-size:22px}.excel-tip strong,.excel-note strong{font-size:13px}.excel-tip p,.excel-note p{margin:3px 0 0;color:#697586;font-size:11px;line-height:1.4}.excel-note>span{font-size:20px}.excel-card #excelPreview{font-size:12px}
+@media(max-width:700px){.excel-card{max-width:none!important}.excel-hero h2{font-size:25px}.excel-hero p{font-size:13px}.excel-menu-item{min-height:76px!important;grid-template-columns:44px minmax(0,1fr) 20px;padding:11px!important}.excel-menu-icon{width:40px;height:40px;border-radius:11px}.excel-menu-copy strong{font-size:14px}.excel-menu-copy small{font-size:11px}.excel-tip,.excel-note{padding:12px}.excel-arrow{font-size:25px}}
 </style>
 </head>
 <body><div class="wrap">
@@ -275,6 +283,10 @@ button{min-width:44px}
       <button class="filter-btn" type="button" onclick="setHistoryDate('month',this)">This Month</button>
       <button class="filter-btn" type="button" onclick="setHistoryDate('all',this)">All Time</button>
     </div>
+  </div>
+  <div class="history-list-head">
+    <span id="historyResultCount">0 stock changes</span>
+    <span class="history-sort-pill"><span aria-hidden="true">↕</span> Latest First</span>
   </div>
   <div id="historyList" class="history-list"></div>
 </section>
@@ -345,18 +357,35 @@ function loadHistory(){try{return JSON.parse(localStorage.getItem('dukaanSaathiS
 function saveHistory(h){try{localStorage.setItem('dukaanSaathiStockHistory',JSON.stringify(h.slice(-1000)))}catch(e){}}
 function addHistory(p,delta,reason){if(!delta)return;const h=loadHistory();h.push({id:crypto.randomUUID(),productId:p.id,productName:p.name,delta,stock:p.stock,at:new Date().toISOString(),reason:reason||'Stock change'});saveHistory(h)}
 function historyMatches(item){
-  if(historyType==='add' && item.delta<=0)return false;
-  if(historyType==='remove' && item.delta>=0)return false;
+  const delta=Number(item.delta)||0;
+  if(historyType==='add' && delta<=0)return false;
+  if(historyType==='remove' && delta>=0)return false;
   if(historyDate==='all')return true;
-  const d=new Date(item.at), now=new Date();
-  if(historyDate==='today') return d.toDateString()===now.toDateString();
-  const start=new Date(now); start.setHours(0,0,0,0); if(historyDate==='week'){const day=(start.getDay()+6)%7; start.setDate(start.getDate()-day); return d>=start;}
-  if(historyDate==='month'){start.setDate(1); return d>=start;}
+  const d=new Date(item.at);
+  if(Number.isNaN(d.getTime()))return false;
+  const now=new Date();
+  const startOfToday=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(historyDate==='today') return d>=startOfToday && d<new Date(startOfToday.getTime()+86400000);
+  if(historyDate==='week'){
+    const start=new Date(startOfToday);
+    const day=(start.getDay()+6)%7;
+    start.setDate(start.getDate()-day);
+    const end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+    return d>=start && d<end;
+  }
+  if(historyDate==='month'){
+    const start=new Date(now.getFullYear(),now.getMonth(),1);
+    const end=new Date(now.getFullYear(),now.getMonth()+1,1);
+    return d>=start && d<end;
+  }
   return true;
 }
 function renderHistory(){
   const el=$('historyList'); if(!el)return;
-  const items=loadHistory().filter(historyMatches).sort((a,b)=>new Date(b.at)-new Date(a.at));
+  const allHistory=loadHistory();
+  const items=allHistory.filter(historyMatches).sort((a,b)=>new Date(b.at)-new Date(a.at));
+  const countEl=$('historyResultCount');
+  if(countEl) countEl.textContent=items.length===1?'1 stock change':`${items.length} stock changes`;
   if(!items.length){el.innerHTML='<div class="history-empty"><div class="history-empty-icon" aria-hidden="true">📦</div><strong>No stock changes yet</strong><span>When you add or remove stock, it will appear here.</span></div><div class="history-tip"><div class="history-tip-icon">💡</div><div><strong>Tip</strong><p>Use +1 or −1 on a product to keep your stock history updated.</p></div></div>';return;}
   el.innerHTML=items.map(i=>{const d=new Date(i.at);const date=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});const time=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});const sign=i.delta>0?'+':'';const cls=i.delta>0?'add':'remove';const text=i.delta>0?'Stock added':'Stock removed';return `<article class="history-item"><div class="history-product-icon">📦</div><div class="history-main"><div class="history-name">${esc(i.productName)}</div><div class="history-time">${date}, ${time}</div></div><div class="history-change-wrap"><div class="history-change ${cls}">${sign}${i.delta}</div><div class="history-label ${cls}">${text}</div></div><div class="history-stock"><span>Stock now</span><strong>${i.stock}</strong></div></article>`}).join('');
 }
@@ -625,20 +654,24 @@ function manualScan(){const v=prompt('Enter barcode number:');if(v){const code=n
 openDB().then(async()=>{products=await all();render();showView('home')});
 </script>
 <section class="excel-card app-view" id="excelTools" hidden>
-  <div class="page-heading excel-page-heading"><h2>Excel</h2><p class="muted">Add or update many products at once.</p></div>
+  <div class="excel-hero">
+    <div class="excel-hero-icon">▤</div>
+    <div><h2>Excel</h2><p>Add or update many products at once.</p></div>
+  </div>
   <div class="excel-menu">
     <button type="button" class="excel-menu-item excel-import" onclick="document.getElementById('excelImportInput').click()">
-      <span class="excel-menu-icon">↑</span><span class="excel-menu-copy"><strong>Import Excel</strong><small>Add or update products<br>from an Excel file.</small></span><span class="excel-arrow">›</span>
+      <span class="excel-menu-icon">↑</span><span class="excel-menu-copy"><strong>Import Excel</strong><small>Add or update products from an Excel file.</small></span><span class="excel-arrow">›</span>
     </button>
     <button type="button" class="excel-menu-item excel-export" onclick="exportProductsToExcel()">
-      <span class="excel-menu-icon">↓</span><span class="excel-menu-copy"><strong>Export Excel</strong><small>Download your product list<br>to an Excel file.</small></span><span class="excel-arrow">›</span>
+      <span class="excel-menu-icon">↓</span><span class="excel-menu-copy"><strong>Export Excel</strong><small>Download your product list to an Excel file.</small></span><span class="excel-arrow">›</span>
     </button>
     <button type="button" class="excel-menu-item excel-template" onclick="downloadExcelTemplate()">
-      <span class="excel-menu-icon">▤</span><span class="excel-menu-copy"><strong>Download Template</strong><small>Get the Excel template with<br>the correct format.</small></span><span class="excel-arrow">›</span>
+      <span class="excel-menu-icon">▤</span><span class="excel-menu-copy"><strong>Download Template</strong><small>Get the correct Excel format before you start.</small></span><span class="excel-arrow">›</span>
     </button>
   </div>
   <input id="excelImportInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelImport(event)">
-  <div class="excel-tip"><span class="tip-icon">💡</span><div><strong>Tip</strong><p>Use the template file to make sure your data is in the correct format before importing.</p></div></div>
+  <div class="excel-tip"><span class="tip-icon">💡</span><div><strong>Quick tip</strong><p>Use the template first. It helps keep your product data in the correct format.</p></div></div>
+  <div class="excel-note"><span>📦</span><div><strong>Bulk products</strong><p>Best when you have many products to add or update together.</p></div></div>
   <div id="excelPreview" style="margin-top:14px"></div>
 </section>
 </div>
