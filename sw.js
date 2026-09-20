@@ -1,10 +1,12 @@
-const CACHE_NAME = 'inventory-app-v11';
+const CACHE_NAME = 'inventory-app-v19';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-192.svg',
-  './icon-512.svg'
+  './icon-512.svg',
+  './logo-mark.svg',
+  './logo.svg'
 ];
 
 self.addEventListener('install', event => {

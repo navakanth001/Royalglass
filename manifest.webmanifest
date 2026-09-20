@@ -1,25 +1,15 @@
 {
-  "name": "Inventory",
-  "short_name": "Inventory",
-  "description": "Local product inventory with barcode scanning and printable labels",
+  "name": "Dukaan Saathi: Inventory",
+  "short_name": "Dukaan Saathi",
+  "description": "Simple inventory, stock management, barcode scanning and label printing for your shop.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f7fa",
-  "theme_color": "#1769e0",
+  "background_color": "#F7FAFC",
+  "theme_color": "#0B4EA2",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src":"icon-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
+    {"src":"icon-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }

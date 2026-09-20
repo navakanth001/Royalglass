@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Phone Inventory & Barcode</title>
+<title>Dukaan Saathi: Inventory</title>
 <style>
 body{font-family:system-ui;margin:0;background:#f5f7fa;color:#17202a}.wrap{max-width:1100px;margin:auto;padding:16px}
 header{display:flex;justify-content:space-between;align-items:center;gap:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card,dialog{background:white;border:1px solid #dde3eb;border-radius:12px;padding:14px}.metric{font-size:24px;font-weight:700}.muted{color:#697586;font-size:13px}
@@ -19,11 +19,26 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 
 
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#0B4EA2">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Inventory">
+<meta name="apple-mobile-web-app-title" content="Dukaan Saathi">
+<link rel="icon" href="icon-192.svg" type="image/svg+xml">
+<style id="dukaan-saathi-brand">
+:root{--brand-blue:#0B4EA2;--brand-orange:#FF5A00;--brand-green:#16A34A;--brand-bg:#F7FAFC}
+body{background:var(--brand-bg)}
+.brand-header{display:flex;align-items:center;gap:10px}
+.brand-logo{width:52px;height:52px;display:block;flex:0 0 52px}
+.brand-name{margin:0;font-size:30px;line-height:1;font-weight:800;letter-spacing:-.7px;color:var(--brand-blue)}
+.brand-name span{color:var(--brand-orange)}
+.brand-tagline{margin-top:5px;font-size:13px;color:#526174;font-weight:600}
+.brand-tagline b{color:var(--brand-green)}
+button{background:var(--brand-blue)}
+button.secondary{background:#EAF1FB;color:#17324F}
+.scan-frame{border-color:var(--brand-orange)}
+@media(max-width:700px){.brand-logo{width:48px;height:48px;flex-basis:48px}.brand-name{font-size:27px}.brand-tagline{font-size:12px}}
+</style>
 <style id="android-app-ui">
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior-y:none}
 body{margin:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));-webkit-tap-highlight-color:transparent}
@@ -129,7 +144,7 @@ button{min-width:44px}
 
 </head>
 <body><div class="wrap">
-<header style="position:sticky;top:0;z-index:20;background:#f5f7fa;padding-top:8px;padding-bottom:10px"><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
+<header style="position:sticky;top:0;z-index:20;background:#F7FAFC;padding-top:8px;padding-bottom:10px"><div class="brand-header"><img class="brand-logo" src="logo-mark.svg" alt="Dukaan Saathi logo"><div><h1 class="brand-name">Dukaan <span>Saathi</span></h1><div class="brand-tagline">Aapki Dukaan Ka Smart Saathi · <b>Inventory & Barcode</b></div></div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
 <div class="grid">
 <div class="card"><div class="muted">Products</div><div class="metric" id="mP">0</div></div>
 <div class="card"><div class="muted">Units</div><div class="metric" id="mU">0</div></div>
