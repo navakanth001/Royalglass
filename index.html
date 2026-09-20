@@ -34,9 +34,7 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
 </div>
 <div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="resetPagination()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}"><button class="secondary" onclick="findBarcode($('q').value)">🔎 Find Barcode</button>
-<div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
-<button class="secondary" onclick="backup()">💾 Backup</button><button class="secondary" onclick="restoreInput.click()">♻️ Restore</button>
-<input id="restoreInput" type="file" accept=".json" hidden onchange="restoreFile(event)"></div>
+<div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button></div>
 <table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table>
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0">
 <button id="prevPage" class="secondary" onclick="previousPage()">← Previous</button>
@@ -303,8 +301,6 @@ function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
 function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)showScanResult(p);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
 
-function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(products,null,2)],{type:'application/json'}));a.download='inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
-function restoreFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x))throw 0;products=x;await putAll();render();alert('Restored.')}catch{alert('Invalid backup')}};r.readAsText(f)}
 openDB().then(async()=>{products=await all();render()});
 </script>
 <section class="card" id="excelTools" style="margin-top:16px">
@@ -504,101 +500,6 @@ async function saveExcelProducts(mode){
 
 
 
-
-
-<section class="card" id="backupTools" style="margin-top:16px">
-  <h2>💾 Inventory Backup</h2>
-  <p style="color:#666;margin-top:-6px">
-    Your inventory is stored locally in this browser. Keep a backup file somewhere safe.
-  </p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button type="button" onclick="downloadInventoryBackup()">💾 Backup Inventory</button>
-    <label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
-      ♻️ Restore Backup
-      <input id="inventoryBackupInput" type="file" accept=".json" style="display:none" onchange="restoreInventoryBackup(event)">
-    </label>
-  </div>
-  <div id="backupStatus" style="margin-top:10px"></div>
-</section>
-
-
-<script id="inventory-backup-functions">
-(function(){
-  async function getBackupProducts(){
-    if (typeof products !== 'undefined' && Array.isArray(products)) return products;
-    if (typeof db !== 'undefined' && db){
-      return await new Promise((resolve,reject)=>{
-        const tx=db.transaction('products','readonly');
-        const req=tx.objectStore('products').getAll();
-        req.onsuccess=()=>resolve(req.result||[]);
-        req.onerror=()=>reject(req.error);
-      });
-    }
-    return [];
-  }
-
-  window.downloadInventoryBackup = async function(){
-    try{
-      const data = await getBackupProducts();
-      const payload = {
-        format: "product-inventory-backup",
-        version: 1,
-        createdAt: new Date().toISOString(),
-        products: data
-      };
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      a.href=url;
-      a.download=`inventory-backup-${stamp}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
-      const el=document.getElementById('backupStatus');
-      if(el) el.textContent=`Backup created: ${data.length} product(s).`;
-    }catch(e){
-      alert('Could not create backup: '+e.message);
-    }
-  };
-
-  window.restoreInventoryBackup = async function(event){
-    const file=event.target.files?.[0];
-    if(!file)return;
-    try{
-      const text=await file.text();
-      const payload=JSON.parse(text);
-      const incoming=Array.isArray(payload) ? payload : payload.products;
-      if(!Array.isArray(incoming)) throw new Error('This is not a valid inventory backup.');
-      const cleaned=incoming.filter(p=>p && (p.name || p.sku || p.barcode)).map(p=>({...p}));
-
-      if(!confirm(`Restore ${cleaned.length} product(s)? Existing products with the same ID may be replaced.`)) return;
-
-      await new Promise((resolve,reject)=>{
-        const tx=db.transaction('products','readwrite');
-        const store=tx.objectStore('products');
-        for(const p of cleaned) store.put(p);
-        tx.oncomplete=resolve;
-        tx.onerror=()=>reject(tx.error);
-        tx.onabort=()=>reject(tx.error||new Error('Restore failed'));
-      });
-
-      if(typeof loadProducts === 'function') await loadProducts();
-      if(typeof render === 'function') await render();
-      else if(typeof renderProducts === 'function') await renderProducts();
-
-      const el=document.getElementById('backupStatus');
-      if(el) el.textContent=`Restore complete: ${cleaned.length} product(s) processed.`;
-      alert('Inventory restore completed.');
-    }catch(e){
-      alert('Could not restore backup: '+e.message);
-    }finally{
-      event.target.value='';
-    }
-  };
-})();
-</script>
 
 
 <script id="pwa-register">
