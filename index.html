@@ -184,18 +184,17 @@ button{min-width:44px}
   .products-section{margin-top:14px}
   .section-title h2{font-size:19px}
   .section-title p{margin:2px 0 7px}
-  .product-card{padding:9px 10px;border-radius:12px;margin-bottom:7px}
-  .compact-main{align-items:center;gap:8px}
+  .product-card{padding:7px 8px;border-radius:11px;margin-bottom:5px}
+  .compact-main{align-items:center;gap:7px}
   .product-info{min-width:0;flex:1}
-  .product-card h3{font-size:16px;line-height:1.15;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .product-meta{font-size:10px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .product-price{font-size:14px;margin-top:3px}
-  .stock-box{min-width:55px;padding:5px 7px;border-radius:9px}
-  .stock-box span{font-size:10px}
-  .stock-box strong{font-size:21px;line-height:1.05}
-  .quick-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:7px}
-  .quick-actions button{min-width:0!important;width:100%;min-height:38px!important;height:38px!important;padding:5px 2px!important;font-size:12px!important;white-space:nowrap}
-  .quick-actions .danger{font-size:11px!important}
+  .product-card h3{font-size:15px;line-height:1.1;margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .product-price{font-size:13px;margin-top:1px}
+  .stock-box{min-width:50px;padding:4px 6px;border-radius:8px}
+  .stock-box span{font-size:9px}
+  .stock-box strong{font-size:19px;line-height:1}
+  .quick-actions{display:grid;grid-template-columns:1fr 1fr repeat(3,38px);gap:4px;margin-top:5px}
+  .quick-actions button{min-width:0!important;width:100%;min-height:32px!important;height:32px!important;padding:3px 2px!important;font-size:11px!important;white-space:nowrap}
+  .quick-actions button:nth-child(n+3){font-size:15px!important}
 }
 @media(max-width:430px){
   .quick-actions{gap:4px}
@@ -280,7 +279,7 @@ function render(){
   const a=filtered.slice(begin,begin+PAGE_SIZE);
 
   $('rows').innerHTML=a.map(p=>`<tr><td><strong>${esc(p.name)}</strong></td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products yet. Tap “Add Product” above.</td></tr>';
-  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''}"><div class="product-main compact-main"><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-meta">Barcode: ${esc(p.barcode)}</div><div class="product-price">${fmt(p.sell)}</div></div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button onclick="stock('${p.id}',-1)">− 1</button><button onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" onclick="edit('${p.id}')">✏️ Edit</button><button class="secondary" onclick="printOne('${p.id}')">🏷️ Label</button><button class="danger" onclick="del('${p.id}')">Delete</button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
+  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''}"><div class="product-main compact-main"><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-price">${fmt(p.sell)}</div></div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button aria-label="Decrease stock" title="Decrease stock" onclick="stock('${p.id}',-1)">− 1</button><button aria-label="Increase stock" title="Increase stock" onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" aria-label="Edit product" title="Edit product" onclick="edit('${p.id}')">✏️</button><button class="secondary" aria-label="Print label" title="Print label" onclick="printOne('${p.id}')">🏷️</button><button class="danger" aria-label="Delete product" title="Delete product" onclick="del('${p.id}')">🗑️</button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
 
   $('mP').textContent=products.length;
   $('mU').textContent=products.reduce((a,p)=>a+p.stock,0);
