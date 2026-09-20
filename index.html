@@ -1,4 +1,4 @@
-let currentPage=1; const PAGE_SIZE=5;
+
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Phone Inventory & Barcode</title>
@@ -55,6 +55,9 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <section class="labels" id="labels"></section>
 
 <script>
+let currentPage = 1;
+const PAGE_SIZE = 5;
+
 let db,products=[],editing=null;
 let scanStream=null,scannerRunning=false,scannedProductId=null;
 const fmt=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(n||0);
