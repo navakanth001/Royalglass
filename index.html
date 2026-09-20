@@ -25,6 +25,7 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Inventory">
 
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
 </head>
 <body><div class="wrap">
 <header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
@@ -115,6 +116,8 @@ async function openScanner(){
 
   panel.style.setProperty('display','block','important');
   panel.hidden=false;
+  const wrap=$('cameraWrap');
+  if(wrap) wrap.style.display='block';
   panel.removeAttribute('hidden');
   if($('cameraPlaceholder')) $('cameraPlaceholder').style.display='none';
   video.style.setProperty('display','block','important');
@@ -150,19 +153,49 @@ async function openScanner(){
     if(status) status.textContent='Camera is on. Point it at the barcode.';
     if($('cameraPlaceholder')) $('cameraPlaceholder').style.display='none';
 
+    // Prefer ZXing: Android Chrome's native BarcodeDetector often does not
+    // support Code 128 even though the camera itself works.
+    if(window.ZXingBrowser){
+      try{
+        if(window.__zxingControls) window.__zxingControls.stop();
+        const reader = new ZXingBrowser.BrowserMultiFormatReader();
+        const controls = await reader.decodeFromVideoDevice(
+          undefined,
+          video,
+          async (result, error, controls) => {
+            if(!scannerRunning) return;
+            if(result){
+              const value=result.getText();
+              if(value){
+                window.__zxingControls=controls;
+                await handleScannedBarcode(value);
+                stopScanner();
+              }
+            }
+          }
+        );
+        window.__zxingControls=controls;
+        if(status) status.textContent='Camera is on. Point it at the Code 128 barcode.';
+        return;
+      }catch(e){
+        // Fall through to native BarcodeDetector if ZXing cannot start.
+      }
+    }
+
     if(!('BarcodeDetector' in window)){
-      if(status) status.textContent='Camera is working. Use manual barcode entry if automatic scanning is unavailable.';
+      if(status) status.textContent='Camera is working, but automatic barcode reading is unavailable. Use manual barcode entry.';
       return;
     }
 
     let supported=[];
     try{ supported=await BarcodeDetector.getSupportedFormats(); }catch(e){}
-    if(!supported.includes('code_128')){
-      if(status) status.textContent='Camera is working, but Code 128 auto-detection is unavailable in this browser.';
+    const wanted=supported.includes('code_128') ? ['code_128'] : supported;
+    if(!wanted.length){
+      if(status) status.textContent='Camera is working, but this browser cannot decode barcodes.';
       return;
     }
 
-    const detector=new BarcodeDetector({formats:['code_128']});
+    const detector=new BarcodeDetector({formats:wanted});
     const scan=async()=>{
       if(!scannerRunning)return;
       try{
@@ -192,14 +225,29 @@ async function openScanner(){
 }
 function stopScanner(){
   scannerRunning=false;
+  try{ if(window.__zxingControls) window.__zxingControls.stop(); }catch(e){}
+  window.__zxingControls=null;
   if(scanStream){
     scanStream.getTracks().forEach(t=>t.stop());
     scanStream=null;
   }
   const video=$('camera');
-  if(video) video.srcObject=null;
+  if(video){
+    video.pause();
+    video.srcObject=null;
+    video.removeAttribute('src');
+    video.style.display='none';
+  }
+  const wrap=$('cameraWrap');
+  if(wrap){
+    wrap.classList.remove('camera-live');
+    wrap.style.display='none';
+  }
   const panel=$('scanner');
-  if(panel) panel.style.setProperty('display','none','important');
+  if(panel){
+    panel.style.setProperty('display','none','important');
+    panel.hidden=true;
+  }
   const ph=$('cameraPlaceholder');
   if(ph) ph.style.display='';
 }
