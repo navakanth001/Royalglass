@@ -283,7 +283,7 @@ button{min-width:44px}
 </div>
 
 <section id="historyView" class="app-view" hidden>
-  <div class="page-heading history-page-heading"><h2>Stock History</h2><p class="muted">See all stock changes in your shop.</p></div>
+  <div class="page-heading history-page-heading"><div class="history-heading-row"><h2>Stock History</h2><button type="button" class="history-statement-btn" onclick="openStatementGenerator()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span>Generate Statement</span></button></div><p class="muted">See all stock changes in your shop.</p></div>
   <div class="history-filters">
     <div class="filter-row" id="historyTypeFilters">
       <button class="filter-btn active" type="button" onclick="setHistoryType('all',this)">All</button>
@@ -302,13 +302,6 @@ button{min-width:44px}
     <span class="history-sort-pill"><span aria-hidden="true">↕</span> Latest First</span>
   </div>
   <div id="historyList" class="history-list"></div>
-  <div class="statement-cta">
-    <div class="statement-cta-copy">
-      <div class="statement-cta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg></div>
-      <div><h3>Need a stock statement?</h3><p>Get a clear report for any date range or product.</p></div>
-    </div>
-    <button type="button" class="primary" onclick="openStatementGenerator()">Generate Statement</button>
-  </div>
 </section>
 
 <section class="search-card card home-only">
@@ -938,4 +931,12 @@ window.addEventListener('popstate',function(){
 .statement-cta{margin-top:16px;padding:16px;border:1px solid #dce8f5;border-radius:18px;background:linear-gradient(180deg,#f7fbff,#eef6ff);display:flex;align-items:center;justify-content:space-between;gap:14px}
 .statement-cta-copy{display:flex;align-items:center;gap:12px;min-width:0}.statement-cta-icon{width:44px;height:44px;border-radius:13px;background:#dcecff;color:#0b4ea2;display:grid;place-items:center;flex:0 0 auto}.statement-cta-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.statement-cta h3{margin:0;font-size:15px;color:#13243a}.statement-cta p{margin:3px 0 0;font-size:11px;color:#697586}.statement-cta button{width:auto!important;min-height:44px!important;margin:0!important;padding:0 16px!important;border-radius:12px!important;white-space:nowrap}
 @media(max-width:520px){.statement-cta{align-items:stretch;flex-direction:column}.statement-cta-copy{align-items:flex-start}.statement-cta button{width:100%!important}}
+/* v47: statement action sits directly in the Stock History header. */
+.history-heading-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.history-heading-row h2{margin:0;min-width:0}
+.history-statement-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 13px;border:1px solid #cfe0f2;border-radius:11px;background:#edf5ff;color:#0b4ea2;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px rgba(20,50,80,.04)}
+.history-statement-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.history-statement-btn:active{transform:translateY(1px);background:#e3effc}
+@media(max-width:520px){.history-heading-row{gap:8px}.history-heading-row h2{font-size:21px!important}.history-statement-btn{min-height:38px;padding:0 10px;font-size:10px;border-radius:10px}.history-statement-btn svg{width:16px;height:16px}.history-page-heading p{margin-top:5px}}
+
 >
