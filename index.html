@@ -48,6 +48,24 @@ button{min-width:44px}
   .metric{font-size:26px}
 }
 </style>
+
+<style id="equal-header-buttons">
+@media (max-width:700px){
+  header > div:last-child button{
+    flex:0 0 auto !important;
+    width:150px !important;
+    height:46px !important;
+    min-height:46px !important;
+    box-sizing:border-box !important;
+  }
+}
+@media (max-width:430px){
+  header > div:last-child button{
+    width:140px !important;
+  }
+}
+</style>
+
 </head>
 <body><div class="wrap">
 <header style="position:sticky;top:0;z-index:20;background:#f5f7fa;padding-top:8px;padding-bottom:10px"><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
@@ -57,7 +75,7 @@ button{min-width:44px}
 <div class="card"><div class="muted">Low stock</div><div class="metric" id="mL">0</div></div>
 <div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
 </div>
-<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="resetPagination()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}"><button class="secondary" onclick="findBarcode($('q').value)">🔎 Find Barcode</button>
+<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="resetPagination()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}">
 <div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button></div>
 <table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table>
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0">
