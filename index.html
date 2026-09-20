@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phone Inventory & Barcode</title>
+<style>
+body{font-family:system-ui;margin:0;background:#f5f7fa;color:#17202a}.wrap{max-width:1100px;margin:auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card,dialog{background:white;border:1px solid #dde3eb;border-radius:12px;padding:14px}.metric{font-size:24px;font-weight:700}.muted{color:#697586;font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.print-settings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.print-settings select{padding:10px;border:1px solid #ccd4df;border-radius:8px;background:#fff}.print-settings label{font-size:13px;color:#697586}.toolbar input,input{padding:10px;border:1px solid #ccd4df;border-radius:8px}input{width:100%;box-sizing:border-box}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}th{background:#eef2f6}
+button{border:0;border-radius:8px;padding:9px 12px;background:#1769e0;color:white;cursor:pointer}button.secondary{background:#e8edf5;color:#17202a}button.danger{background:#c62828}.scanner{display:none;margin:14px 0;padding:14px;background:#fff;border:1px solid #dde3eb;border-radius:12px}.scanner video{width:100%;max-height:360px;object-fit:cover;background:#111;border-radius:10px}.scan-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.scan-status{font-size:13px;color:#697586;margin-top:8px}
+dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{display:grid;gap:10px}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+@media(max-width:750px){.grid{grid-template-columns:repeat(2,1fr)}th:nth-child(3),td:nth-child(3){display:none}}
+@media print{body *{visibility:hidden}.labels,.labels *{visibility:visible}.labels{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff}.no-print{display:none!important}.labelgrid{padding:5mm;gap:4mm}.label{break-inside:avoid;page-break-inside:avoid}}
+.labels{display:none}.labelgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.label{height:30mm;border:1px dashed #aaa;padding:3mm;text-align:center;overflow:hidden;box-sizing:border-box}.labelgrid.a4{grid-template-columns:repeat(3,1fr)}.labelgrid.thermal{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.thermal .label{border:0;width:var(--label-w);height:var(--label-h);padding:2.5mm;margin:0 auto}.labelgrid.large .label{width:100mm;height:50mm}.labelgrid.medium .label{width:60mm;height:30mm}.labelgrid.small .label{width:50mm;height:25mm}.label .name{font-size:11px;font-weight:700}.label .sku{font-size:8px}.barcode-svg{width:100%;height:15mm;display:block}.code{font-size:8px;margin-top:1mm}.print-title{font-size:10px;font-weight:700;margin-bottom:1mm}
+</style></head>
+<body><div class="wrap">
+<header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
+<div class="grid">
+<div class="card"><div class="muted">Products</div><div class="metric" id="mP">0</div></div>
+<div class="card"><div class="muted">Units</div><div class="metric" id="mU">0</div></div>
+<div class="card"><div class="muted">Low stock</div><div class="metric" id="mL">0</div></div>
+<div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
+</div>
+<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="render()">
+<div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="openScanner()">📷 Scan barcode</button><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
+<button class="secondary" onclick="backup()">💾 Backup</button><button class="secondary" onclick="restoreInput.click()">♻️ Restore</button>
+<input id="restoreInput" type="file" accept=".json" hidden onchange="restoreFile(event)"></div>
+<table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="scanner" id="scanner"><video id="camera" playsinline muted></video><div class="scan-row"><button onclick="stopScanner()">Close scanner</button><button class="secondary" onclick="manualScan()">Enter barcode manually</button></div><div class="scan-status" id="scanStatus">Camera scanner uses your phone browser. Camera access requires HTTPS or localhost.</div></div><p class="muted">Products and stock are stored on this phone using IndexedDB. Putting this app online does not upload your inventory. Back up regularly.</p></div>
+
+<dialog id="productDlg"><h2 id="dlgTitle">Add product</h2><div class="form">
+<label>Name<input id="name"></label><label>SKU<input id="sku"></label><label>Barcode<input id="barcode"></label>
+<label>Purchase price<input id="buy" type="number" min="0" step=".01"></label><label>Selling price<input id="sell" type="number" min="0" step=".01"></label>
+<label>Stock<input id="stock" type="number" min="0" step="1"></label><label>Low-stock threshold<input id="low" type="number" min="0" step="1" value="5"></label>
+</div><div class="actions"><button class="secondary" onclick="productDlg.close()">Cancel</button><button onclick="save()">Save</button></div></dialog>
+
+<section class="labels" id="labels"></section>
+
+<script>
+let db,products=[],editing=null;
+let scanStream=null,scanTimer=null,scannerRunning=false;
+const fmt=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(n||0);
+const $=id=>document.getElementById(id);
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open('PhoneInventoryDB',1);r.onupgradeneeded=()=>r.result.createObjectStore('products',{keyPath:'id'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function all(){return new Promise((res,rej)=>{let r=db.transaction('products','readonly').objectStore('products').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function putAll(){return new Promise((res,rej)=>{let t=db.transaction('products','readwrite'),s=t.objectStore('products');s.clear();products.forEach(p=>s.put(p));t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+function code(){let n=(products.length+1).toString().padStart(5,'0'),c='890'+n;while(products.some(p=>p.barcode===c)){n=(+n+1).toString().padStart(5,'0');c='890'+n}return c}
+function sk(){let n=(products.length+1).toString().padStart(5,'0'),c='P'+n;while(products.some(p=>p.sku===c)){n=(+n+1).toString().padStart(5,'0');c='P'+n}return c}
+function clearForm(){editing=null;$('dlgTitle').textContent='Add product';$('name').value='';$('sku').value=sk();$('barcode').value=code();$('buy').value=0;$('sell').value=0;$('stock').value=0;$('low').value=5}
+function edit(id){let p=products.find(x=>x.id===id);editing=id;$('dlgTitle').textContent='Edit product';for(let k of ['name','sku','barcode','buy','sell','stock','low'])$(k).value=p[k];productDlg.showModal()}
+async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),buy:+$('buy').value||0,sell:+$('sell').value||0,stock:+$('stock').value||0,low:+$('low').value||0};if(!p.name||!p.sku||!p.barcode)return alert('Name, SKU and barcode are required.');if(products.some(x=>x.sku===p.sku&&x.id!==p.id)||products.some(x=>x.barcode===p.barcode&&x.id!==p.id))return alert('SKU or barcode already exists.');if(editing)products=products.map(x=>x.id===editing?p:x);else products.push(p);await putAll();productDlg.close();render()}
+async function stock(id,d){let p=products.find(x=>x.id===id);if(d<0&&p.stock<1)return alert('No stock available.');p.stock+=d;await putAll();render()}
+async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);await putAll();render()}}
+function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){let s=$('q').value.toLowerCase(),a=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v).toLowerCase().includes(s)));$('rows').innerHTML=a.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products</td></tr>';$('mP').textContent=products.length;$('mU').textContent=products.reduce((a,p)=>a+p.stock,0);$('mL').textContent=products.filter(p=>p.stock<=p.low).length;$('mV').textContent=fmt(products.reduce((a,p)=>a+p.stock*p.buy,0))}
+const CODE128B = [
+  '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
+  '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
+  '221231','213212','223112','312131','311222','321122','321221','312212','322112','322211',
+  '212123','212321','232121','111323','131123','131321','112313','132113','132311','211313',
+  '231113','231311','112133','112331','132131','113123','113321','133121','313121','211331',
+  '231131','213113','213311','213131','311123','311321','331121','312113','312311','332111',
+  '314111','221411','431111','111224','111422','121124','121421','141122','141221','112214',
+  '112412','122114','122411','142112','142211','241211','221114','413111','241112','134111',
+  '111242','121142','121241','114212','124112','124211','411212','421112','421211','212141',
+  '214121','412121','111143','111341','131141','114113','114311','411113','411311','113141',
+  '114131','311141','411131','211412','211214','211232','2331112'
+];
+function barcodeSvg(value){
+  value=String(value||'');
+  if(!/^[\x20-\x7E]*$/.test(value)) return '';
+  let values=[104];
+  for(let i=0;i<value.length;i++) values.push(value.charCodeAt(i)-32);
+  let checksum=104;
+  for(let i=1;i<values.length;i++) checksum+=values[i]*i;
+  values.push(checksum%103,106);
+  let x=0, bars=[];
+  for(const v of values){const pat=CODE128B[v];for(let i=0;i<pat.length;i++){const w=+pat[i];if(i%2===0) bars.push(`<rect x="${x}" y="0" width="${w}" height="100"/>`);x+=w;}}
+  return `<svg class="barcode-svg" viewBox="0 0 ${x} 100" preserveAspectRatio="none" role="img" aria-label="Barcode ${esc(value)}"><rect width="100%" height="100%" fill="white"/>${bars.join('')}</svg>`;
+}
+function getLabelConfig(){
+  const v=$('labelSize').value;
+  if(v==='50x25') return {cls:'small',w:'50mm',h:'25mm',page:'50mm 25mm',orientation:'portrait'};
+  if(v==='60x30') return {cls:'medium',w:'60mm',h:'30mm',page:'60mm 30mm',orientation:'portrait'};
+  if(v==='100x50') return {cls:'large',w:'100mm',h:'50mm',page:'100mm 50mm',orientation:'portrait'};
+  return {cls:'a4',w:'',h:'',page:'A4',orientation:'portrait'};
+}
+function applyLabelSize(){const c=getLabelConfig();document.documentElement.style.setProperty('--label-w',c.w);document.documentElement.style.setProperty('--label-h',c.h)}
+function label(p){return `<div class="label"><div class="print-title">${esc(p.name)}</div><div class="sku">SKU: ${esc(p.sku)}</div>${barcodeSvg(p.barcode)}<div class="code">${esc(p.barcode)}</div></div>`}
+function printLabels(a){applyLabelSize();const c=getLabelConfig(),copies=+$('labelCopies').value||1;let items=[];a.forEach(p=>{for(let i=0;i<copies;i++)items.push(label(p))});$('labels').innerHTML=`<div class="labelgrid ${c.cls}" style="--label-w:${c.w};--label-h:${c.h}">${items.join('')}</div>`;let old=document.getElementById('dynamicPrintStyle');if(old)old.remove();let st=document.createElement('style');st.id='dynamicPrintStyle';st.textContent=`@media print{@page{size:${c.page} ${c.orientation};margin:0}.labelgrid.a4{grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.labelgrid.small,.labelgrid.medium,.labelgrid.large{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.small .label,.labelgrid.medium .label,.labelgrid.large .label{margin:0 auto}}`;document.head.appendChild(st);requestAnimationFrame(()=>window.print())}
+function printOne(id){let p=products.find(p=>p.id===id);if(p)printLabels([p])}
+function printSelected(){let s=$('q').value.toLowerCase(),a=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v).toLowerCase().includes(s)));if(!a.length)return alert('No products to print.');printLabels(a)}
+function printAll(){if(!products.length)return alert('No products to print.');printLabels(products)}
+window.onafterprint=()=>{$('labels').innerHTML=''}
+window.addEventListener('pagehide',stopScanner)
+
+async function openScanner(){
+  $('scanner').style.display='block';
+  if(!window.isSecureContext && location.hostname!=='localhost'){$('scanStatus').textContent='Camera access is blocked on non-HTTPS pages. Open this app using an https:// link.';return}
+  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='This browser does not provide camera access. Use manual barcode entry.';return}
+  if(!('BarcodeDetector' in window)){$('scanStatus').textContent='This browser does not support native barcode scanning. Use manual barcode entry or Chrome on Android.';return}
+  try{
+    const supported=await BarcodeDetector.getSupportedFormats();
+    if(!supported.includes('code_128')){$('scanStatus').textContent='This browser cannot detect Code 128 barcodes. Use manual barcode entry or a supported browser.';return}
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    $('camera').srcObject=scanStream;await $('camera').play();scannerRunning=true;$('scanStatus').textContent='Point the rear camera at a Code 128 barcode.';
+    const detector=new BarcodeDetector({formats:['code_128']});
+    const scan=async()=>{if(!scannerRunning)return;try{const codes=await detector.detect($('camera'));if(codes.length){const value=codes[0].rawValue;stopScanner();$('q').value=value;render();const p=products.find(x=>String(x.barcode)===String(value));if(p){edit(p.id);$('scanStatus').textContent='';}else{alert('Barcode '+value+' was read, but no matching product was found.');$('barcode').value=value;productDlg.showModal();}}}catch(e){}scanTimer=setTimeout(scan,250)};scan();
+  }catch(e){$('scanStatus').textContent='Camera permission was denied or unavailable. Allow camera access in the browser and try again.'}
+}
+function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').srcObject=null;$('scanner').style.display='none'}
+function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)edit(p.id);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
+
+function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(products,null,2)],{type:'application/json'}));a.download='inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+function restoreFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x))throw 0;products=x;await putAll();render();alert('Restored.')}catch{alert('Invalid backup')}};r.readAsText(f)}
+openDB().then(async()=>{products=await all();render()});
+</script></body></html>
