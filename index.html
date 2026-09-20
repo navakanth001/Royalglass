@@ -251,6 +251,30 @@ function stopScanner(){
   const ph=$('cameraPlaceholder');
   if(ph) ph.style.display='';
 }
+
+async function handleScannedBarcode(value){
+  const code=String(value||'').trim();
+  if(!code) return;
+  // Match barcode exactly, preserving leading zeros.
+  const p=products.find(x=>String(x.barcode??'').trim()===code);
+  if(p){
+    $('q').value=code;
+    render();
+    showScanResult(p);
+    $('scanStatus').textContent='Barcode found: '+code;
+    return;
+  }
+  // Barcode was read successfully but is not in the local inventory.
+  $('scanStatus').textContent='Barcode read: '+code+' — product not found in inventory.';
+  $('q').value=code;
+  render();
+  clearForm();
+  $('barcode').value=code;
+  if(typeof productDlg!=='undefined' && productDlg && !productDlg.open){
+    productDlg.showModal();
+  }
+}
+
 function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
 function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)showScanResult(p);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
