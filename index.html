@@ -108,48 +108,99 @@ window.onafterprint=()=>{$('labels').innerHTML=''}
 window.addEventListener('pagehide',stopScanner)
 
 async function openScanner(){
-  const panel=$('scanner'); clearScanResult(); panel.style.display='block'; panel.scrollIntoView({behavior:'smooth',block:'center'});
-  $('scanStatus').textContent='Starting rear camera…';
-  if(!window.isSecureContext && location.hostname!=='localhost'){$('scanStatus').textContent='Camera access requires an https:// link (or localhost).';return}
-  if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is not available in this browser. You can enter a barcode manually.';return}
-  try{
-    // Open the camera first, even if BarcodeDetector is unavailable, so the preview is always visible.
-    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
-    const video=$('camera'); $('cameraPlaceholder').style.display='none'; $('cameraWrap')?.classList.add('camera-live'); video.srcObject=scanStream; video.muted=true; video.setAttribute('playsinline',''); video.setAttribute('autoplay','');
-    await video.play(); scannerRunning=true;
-    $('scanStatus').textContent='Rear camera is on. Point it at a Code 128 barcode.';
+  const panel=$('scanner');
+  clearScanResult();
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  const status=$('scanStatus');
+  status.textContent='Requesting camera permission…';
 
+  if(!window.isSecureContext && location.hostname!=='localhost'){
+    status.textContent='Camera requires the HTTPS version of this app. Open the GitHub Pages https:// address.';
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    status.textContent='This browser cannot access the camera. Please use Chrome on Android.';
+    return;
+  }
+
+  try{
+    // Stop any previous stream first.
+    if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+
+    // Prefer the rear camera. Start with a simple constraint set for maximum
+    // compatibility, then fall back if the device rejects facingMode.
+    let stream;
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{facingMode:{exact:'environment'}}
+      });
+    }catch(firstErr){
+      stream=await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{facingMode:'environment'}
+      });
+    }
+
+    scanStream=stream;
+    const video=$('camera');
+    $('cameraPlaceholder').style.display='none';
+    $('cameraWrap')?.classList.add('camera-live');
+    video.srcObject=stream;
+    video.muted=true;
+    video.setAttribute('playsinline','');
+    video.setAttribute('autoplay','');
+    await video.play();
+    scannerRunning=true;
+    status.textContent='Camera is on. Point it at the barcode.';
+
+    // BarcodeDetector support varies by browser. Keep the live preview working
+    // even when automatic Code 128 detection is unavailable.
     if(!('BarcodeDetector' in window)){
-      $('scanStatus').textContent='Camera preview is working, but this browser cannot read Code 128 automatically. Use “Enter barcode manually”, or open this app in Chrome on Android.';
+      status.textContent='Camera is working. Automatic Code 128 scanning is not supported here; use manual barcode entry.';
       return;
     }
-    const supported=await BarcodeDetector.getSupportedFormats();
-    if(!supported.includes('code_128')){
-      $('scanStatus').textContent='Camera preview is working, but this browser does not support Code 128 scanning. Use “Enter barcode manually”.';
+
+    let formats=[];
+    try{ formats=await BarcodeDetector.getSupportedFormats(); }catch(e){}
+    if(!formats.includes('code_128')){
+      status.textContent='Camera is working, but this browser cannot read Code 128 automatically. Use manual barcode entry.';
       return;
     }
+
     const detector=new BarcodeDetector({formats:['code_128']});
     const scan=async()=>{
       if(!scannerRunning)return;
       try{
         if(video.readyState>=2){
           const codes=await detector.detect(video);
-          if(codes.length){
-            const value=codes[0].rawValue; stopScanner(); $('q').value=value; render();
-            const found=products.find(x=>String(x.barcode)===String(value));
-            if(found){ showScanResult(found); }
-            else { alert('Barcode '+value+' was read, but no matching product was found.'); clearForm(); $('barcode').value=value; productDlg.showModal(); }
-            return;
+          if(codes && codes.length){
+            const value=codes[0].rawValue;
+            if(value){
+              await handleScannedBarcode(value);
+              stopScanner();
+              return;
+            }
           }
         }
-      }catch(e){/* keep preview running */}
-      scanTimer=setTimeout(scan,300);
+      }catch(e){}
+      if(scannerRunning) requestAnimationFrame(scan);
     };
-    scan();
-  }catch(e){
-    if(e?.name==='NotAllowedError') $('scanStatus').textContent='Camera permission was denied. Allow camera access for this site in your browser settings, then try again.';
-    else if(e?.name==='NotFoundError') $('scanStatus').textContent='No camera was found on this device.';
-    else $('scanStatus').textContent='Could not start the camera. Check browser permissions and try again.';
+    requestAnimationFrame(scan);
+
+  }catch(err){
+    scannerRunning=false;
+    const name=err?.name || '';
+    if(name==='NotAllowedError' || name==='PermissionDeniedError'){
+      status.textContent='Camera permission was denied. In Chrome, tap the 🔒 icon beside the address → Permissions → Camera → Allow, then reload the app.';
+    }else if(name==='NotFoundError'){
+      status.textContent='No camera was found on this device.';
+    }else if(name==='NotReadableError'){
+      status.textContent='The camera is being used by another app. Close other camera apps and try again.';
+    }else{
+      status.textContent='Could not start the camera: '+(err?.message || name || 'unknown error');
+    }
   }
 }
 function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').pause();$('camera').srcObject=null;$('cameraPlaceholder').style.display='flex';$('scanner').style.display='block'}
