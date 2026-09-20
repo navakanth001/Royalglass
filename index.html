@@ -56,7 +56,7 @@ let currentPage = 1;
 const PAGE_SIZE = 5;
 
 let db,products=[],editing=null;
-let scanStream=null,scannerRunning=false,scannedProductId=null;
+let scanStream=null,scannerRunning=false,scannedProductId=null,pendingScannedBarcode=null;
 const fmt=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(n||0);
 const $=id=>document.getElementById(id);
 function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open('PhoneInventoryDB',1);r.onupgradeneeded=()=>r.result.createObjectStore('products',{keyPath:'id'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
@@ -66,7 +66,7 @@ function code(){let n=(products.length+1).toString().padStart(5,'0'),c='890'+n;w
 function sk(){let n=(products.length+1).toString().padStart(5,'0'),c='P'+n;while(products.some(p=>p.sku===c)){n=(+n+1).toString().padStart(5,'0');c='P'+n}return c}
 function clearForm(){editing=null;$('dlgTitle').textContent='Add product';$('name').value='';$('sku').value=sk();$('barcode').value=code();$('buy').value=0;$('sell').value=0;$('stock').value=0;$('low').value=5}
 function edit(id){let p=products.find(x=>x.id===id);editing=id;$('dlgTitle').textContent='Edit product';for(let k of ['name','sku','barcode','buy','sell','stock','low'])$(k).value=p[k];productDlg.showModal()}
-async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),buy:+$('buy').value||0,sell:+$('sell').value||0,stock:+$('stock').value||0,low:+$('low').value||0};if(!p.name||!p.sku||!p.barcode)return alert('Name, SKU and barcode are required.');if(products.some(x=>x.sku===p.sku&&x.id!==p.id)||products.some(x=>x.barcode===p.barcode&&x.id!==p.id))return alert('SKU or barcode already exists.');if(editing)products=products.map(x=>x.id===editing?p:x);else products.push(p);await putAll();productDlg.close();render()}
+async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),buy:+$('buy').value||0,sell:+$('sell').value||0,stock:+$('stock').value||0,low:+$('low').value||0};if(!p.name||!p.sku||!p.barcode)return alert('Name, SKU and barcode are required.');if(products.some(x=>x.sku===p.sku&&x.id!==p.id)||products.some(x=>x.barcode===p.barcode&&x.id!==p.id))return alert('SKU or barcode already exists.');const cameFromScan=!!pendingScannedBarcode&&normalizeBarcode(p.barcode)===normalizeBarcode(pendingScannedBarcode);if(editing)products=products.map(x=>x.id===editing?p:x);else products.push(p);await putAll();productDlg.close();render();if(cameFromScan){$('scanner').style.setProperty('display','block','important');scannedProductId=p.id;showScanResult(p);$('scanStatus').textContent='Product added: '+p.name+' — barcode '+p.barcode;pendingScannedBarcode=null;}else if(!editing){pendingScannedBarcode=null;}}
 async function stock(id,d){let p=products.find(x=>x.id===id);if(d<0&&p.stock<1)return alert('No stock available.');p.stock+=d;await putAll();render()}
 async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);await putAll();render()}}
 function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -289,7 +289,8 @@ async function handleScannedBarcode(value){
     return;
   }
   const code=normalizeBarcode(value);
-  // Offer to add a newly scanned barcode.
+  // Remember that Add Product was opened from this scan.
+  pendingScannedBarcode=code;
   clearForm();
   $('barcode').value=code;
   if(typeof productDlg!=='undefined' && productDlg && !productDlg.open){
@@ -299,7 +300,7 @@ async function handleScannedBarcode(value){
 
 function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
-function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)showScanResult(p);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
+function manualScan(){const v=prompt('Enter barcode number:');if(v){const code=normalizeBarcode(v.trim());$('q').value=code;render();const p=findProductByBarcode(code);if(p)showScanResult(p);else{pendingScannedBarcode=code;clearForm();$('barcode').value=code;productDlg.showModal()}}}
 
 openDB().then(async()=>{products=await all();render()});
 </script>
