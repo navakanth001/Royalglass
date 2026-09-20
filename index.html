@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Phone Inventory & Barcode</title>
@@ -81,11 +80,14 @@ function render(){
   if(currentPage<1) currentPage=1;
   const begin=(currentPage-1)*PAGE_SIZE;
   const a=filtered.slice(begin,begin+PAGE_SIZE);
+
   $('rows').innerHTML=a.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products</td></tr>';
+
   $('mP').textContent=products.length;
   $('mU').textContent=products.reduce((a,p)=>a+p.stock,0);
   $('mL').textContent=products.filter(p=>p.stock<=p.low).length;
   $('mV').textContent=fmt(products.reduce((a,p)=>a+p.stock*p.buy,0));
+
   const info=$('pageInfo'), prev=$('prevPage'), next=$('nextPage');
   if(info) info.textContent=`Page ${currentPage} of ${totalPages} · ${filtered.length} products`;
   if(prev) prev.disabled=currentPage<=1;
@@ -235,17 +237,14 @@ function stopScanner(){
   }
   const wrap=$('cameraWrap');
   if(wrap) wrap.style.display='none';
-  // Keep the scanner controls visible so the user can tap
-  // "Scan Barcode" again after stopping the camera.
   const panel=$('scanner');
   if(panel){
-    panel.style.setProperty('display','block','important');
-    panel.hidden=false;
+    panel.style.setProperty('display','none','important');
+    panel.hidden=true;
   }
   const ph=$('cameraPlaceholder');
-  if(ph) ph.style.display='block';
-  const status=$('scanStatus');
-  if(status) status.textContent='Camera is off. Tap “Scan Barcode” to start again.';
+  if(ph) ph.style.display='';
+}
 
 
 function normalizeBarcode(value){
