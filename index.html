@@ -12,6 +12,19 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 @media print{body *{visibility:hidden}.labels,.labels *{visibility:visible}.labels{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff}.no-print{display:none!important}.labelgrid{padding:5mm;gap:4mm}.label{break-inside:avoid;page-break-inside:avoid}}
 .labels{display:none}.labelgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.label{height:30mm;border:1px dashed #aaa;padding:3mm;text-align:center;overflow:hidden;box-sizing:border-box}.labelgrid.a4{grid-template-columns:repeat(3,1fr)}.labelgrid.thermal{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.thermal .label{border:0;width:var(--label-w);height:var(--label-h);padding:2.5mm;margin:0 auto}.labelgrid.large .label{width:100mm;height:50mm}.labelgrid.medium .label{width:60mm;height:30mm}.labelgrid.small .label{width:50mm;height:25mm}.label .name{font-size:11px;font-weight:700}.label .sku{font-size:8px}.barcode-svg{width:100%;height:15mm;display:block}.code{font-size:8px;margin-top:1mm}.print-title{font-size:10px;font-weight:700;margin-bottom:1mm}
 </style><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<style id="camera-click-visibility">
+#scanner, #cameraScanner, #scannerContainer, #cameraContainer { display:none; }
+</style>
+
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Inventory">
+
 </head>
 <body><div class="wrap">
 <header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
@@ -142,7 +155,30 @@ async function openScanner(){
 function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').pause();$('camera').srcObject=null;$('cameraPlaceholder').style.display='flex';$('scanner').style.display='block'}
 function showScanResult(p){scannedProductId=p.id;$('scanProductName').textContent=p.name;$('scanProductCode').textContent='SKU: '+p.sku+' • Barcode: '+p.barcode;$('scanProductStock').textContent=p.stock;$('scanResult').style.display='block';$('scanner').style.display='block';$('scanner').scrollIntoView({behavior:'smooth',block:'center'})}
 function clearScanResult(){scannedProductId=null;$('scanResult').style.display='none'}
-async function scanAdjust(delta){if(!scannedProductId)return;let p=products.find(x=>x.id===scannedProductId);if(!p)return;if(delta<0&&p.stock<1){alert('No stock available.');return}p.stock+=delta;await putAll();render();showScanResult(p)}
+async function scanAdjust(delta){
+  if(!scannedProductId)return;
+  const p=products.find(x=>x.id===scannedProductId);
+  if(!p)return;
+  p.stock=Number.isFinite(Number(p.stock)) ? Number(p.stock) : Number(p.quantity)||0;
+  const next=p.stock+Number(delta);
+  if(next<0){alert('No stock available.');return}
+  p.stock=next;
+  delete p.quantity;
+  try{
+    await new Promise((res,rej)=>{
+      const tx=db.transaction('products','readwrite');
+      tx.objectStore('products').put(p);
+      tx.oncomplete=res;
+      tx.onerror=()=>rej(tx.error);
+      tx.onabort=()=>rej(tx.error||new Error('Database update failed'));
+    });
+    render();
+    showScanResult(p);
+    $('scanStatus').textContent=delta>0 ? 'Quantity increased and saved.' : 'Quantity decreased and saved.';
+  }catch(e){
+    alert('Could not save the quantity change. Please try again.');
+  }
+}
 function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
 function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)showScanResult(p);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
@@ -232,10 +268,10 @@ async function exportProductsToExcel(){
     "Product Name": p.name ?? p.productName ?? '',
     "SKU": p.sku ?? '',
     "Barcode": p.barcode ?? '',
-    "Quantity": Number(p.quantity ?? p.stock ?? 0),
-    "Purchase Price": Number(p.purchasePrice ?? p.costPrice ?? 0),
-    "Selling Price": Number(p.sellingPrice ?? p.salePrice ?? 0),
-    "Low Stock": Number(p.lowStock ?? p.lowStockThreshold ?? 0)
+    "Quantity": Number(p.stock ?? p.quantity ?? 0),
+    "Purchase Price": Number(p.buy ?? p.purchasePrice ?? p.costPrice ?? 0),
+    "Selling Price": Number(p.sell ?? p.sellingPrice ?? p.salePrice ?? 0),
+    "Low Stock": Number(p.low ?? p.lowStock ?? p.lowStockThreshold ?? 0)
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
@@ -259,10 +295,10 @@ function handleExcelImport(event){
         const barcode = String(excelField(r,['Barcode','Bar Code','EAN','UPC'])).trim();
         return {
           row: i+2, name, sku, barcode,
-          quantity: Math.max(0, numExcel(excelField(r,['Quantity','Qty','Stock']),0)),
-          purchasePrice: Math.max(0, numExcel(excelField(r,['Purchase Price','Cost Price','Purchase']),0)),
-          sellingPrice: Math.max(0, numExcel(excelField(r,['Selling Price','Sale Price','MRP','Price']),0)),
-          lowStock: Math.max(0, numExcel(excelField(r,['Low Stock','Low Stock Threshold','Reorder Level']),0))
+          stock: Math.max(0, numExcel(excelField(r,['Quantity','Qty','Stock']),0)),
+          buy: Math.max(0, numExcel(excelField(r,['Purchase Price','Cost Price','Purchase']),0)),
+          sell: Math.max(0, numExcel(excelField(r,['Selling Price','Sale Price','MRP','Price']),0)),
+          low: Math.max(0, numExcel(excelField(r,['Low Stock','Low Stock Threshold','Reorder Level']),0))
         };
       }).filter(r => r.name || r.sku || r.barcode);
       renderExcelPreview();
@@ -288,7 +324,7 @@ function renderExcelPreview(){
   <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
   <thead><tr><th>Row</th><th>Name</th><th>SKU</th><th>Barcode</th><th>Qty</th><th>Buy</th><th>Sell</th><th>Low</th></tr></thead><tbody>`;
   for(const r of shown){
-    html += `<tr><td>${r.row}</td><td>${escExcel(r.name)}</td><td>${escExcel(r.sku)}</td><td>${escExcel(r.barcode)}</td><td>${r.quantity}</td><td>${r.purchasePrice}</td><td>${r.sellingPrice}</td><td>${r.lowStock}</td></tr>`;
+    html += `<tr><td>${r.row}</td><td>${escExcel(r.name)}</td><td>${escExcel(r.sku)}</td><td>${escExcel(r.barcode)}</td><td>${r.stock}</td><td>${r.buy}</td><td>${r.sell}</td><td>${r.low}</td></tr>`;
   }
   html += `</tbody></table></div>`;
   if(pendingExcelRows.length>50) html += `<p>Showing first 50 of ${pendingExcelRows.length} rows.</p>`;
@@ -318,15 +354,19 @@ async function saveExcelProducts(mode){
         name: r.name || 'Imported Product',
         sku: r.sku || ('SKU-' + Date.now().toString().slice(-6)),
         barcode: r.barcode || makeGeneratedBarcode(added+updated),
-        quantity: 0, purchasePrice: 0, sellingPrice: 0, lowStock: 0
+        stock: 0, buy: 0, sell: 0, low: 0
       };
       p.name = r.name || p.name;
       p.sku = r.sku || p.sku;
       p.barcode = r.barcode || p.barcode;
-      p.quantity = r.quantity;
-      p.purchasePrice = r.purchasePrice;
-      p.sellingPrice = r.sellingPrice;
-      p.lowStock = r.lowStock;
+      p.stock = r.stock;
+      p.buy = r.buy;
+      p.sell = r.sell;
+      p.low = r.low;
+      delete p.quantity;
+      delete p.purchasePrice;
+      delete p.sellingPrice;
+      delete p.lowStock;
       if (typeof saveProduct === 'function') await saveProduct(p);
       else if (typeof upsertProduct === 'function') await upsertProduct(p);
       else throw new Error('Product save function not found in app');
@@ -339,6 +379,147 @@ async function saveExcelProducts(mode){
   if(errors.length) msg += `\nErrors: ${errors.slice(0,5).join('\n')}`;
   alert(msg);
   clearExcelPreview();
+}
+</script>
+
+
+<script id="camera-click-toggle">
+(function(){
+  const candidates = ['scanner','cameraScanner','scannerContainer','cameraContainer','cameraPreview'];
+  function findScanner(){
+    for(const id of candidates){
+      const el=document.getElementById(id);
+      if(el) return el;
+    }
+    return null;
+  }
+  function setScannerVisible(show){
+    const el=findScanner();
+    if(!el) return;
+    el.style.display = show ? '' : 'none';
+    if(show) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  window.openCameraScannerUI = function(){
+    setScannerVisible(true);
+  };
+  window.closeCameraScannerUI = function(){
+    setScannerVisible(false);
+  };
+  document.addEventListener('click', function(e){
+    const b=e.target.closest('button');
+    if(!b) return;
+    const t=(b.textContent||'').toLowerCase();
+    if(t.includes('scan barcode') || t.includes('scan bar code')){
+      setTimeout(()=>setScannerVisible(true), 0);
+    }
+    if(t.includes('stop camera') || t.includes('close scanner') || t.includes('close camera')){
+      setScannerVisible(false);
+    }
+  });
+})();
+</script>
+
+
+<section class="card" id="backupTools" style="margin-top:16px">
+  <h2>💾 Inventory Backup</h2>
+  <p style="color:#666;margin-top:-6px">
+    Your inventory is stored locally in this browser. Keep a backup file somewhere safe.
+  </p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" onclick="downloadInventoryBackup()">💾 Backup Inventory</button>
+    <label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+      ♻️ Restore Backup
+      <input id="inventoryBackupInput" type="file" accept=".json" style="display:none" onchange="restoreInventoryBackup(event)">
+    </label>
+  </div>
+  <div id="backupStatus" style="margin-top:10px"></div>
+</section>
+
+
+<script id="inventory-backup-functions">
+(function(){
+  async function getBackupProducts(){
+    if (typeof products !== 'undefined' && Array.isArray(products)) return products;
+    if (typeof db !== 'undefined' && db){
+      return await new Promise((resolve,reject)=>{
+        const tx=db.transaction('products','readonly');
+        const req=tx.objectStore('products').getAll();
+        req.onsuccess=()=>resolve(req.result||[]);
+        req.onerror=()=>reject(req.error);
+      });
+    }
+    return [];
+  }
+
+  window.downloadInventoryBackup = async function(){
+    try{
+      const data = await getBackupProducts();
+      const payload = {
+        format: "product-inventory-backup",
+        version: 1,
+        createdAt: new Date().toISOString(),
+        products: data
+      };
+      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.href=url;
+      a.download=`inventory-backup-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const el=document.getElementById('backupStatus');
+      if(el) el.textContent=`Backup created: ${data.length} product(s).`;
+    }catch(e){
+      alert('Could not create backup: '+e.message);
+    }
+  };
+
+  window.restoreInventoryBackup = async function(event){
+    const file=event.target.files?.[0];
+    if(!file)return;
+    try{
+      const text=await file.text();
+      const payload=JSON.parse(text);
+      const incoming=Array.isArray(payload) ? payload : payload.products;
+      if(!Array.isArray(incoming)) throw new Error('This is not a valid inventory backup.');
+      const cleaned=incoming.filter(p=>p && (p.name || p.sku || p.barcode)).map(p=>({...p}));
+
+      if(!confirm(`Restore ${cleaned.length} product(s)? Existing products with the same ID may be replaced.`)) return;
+
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction('products','readwrite');
+        const store=tx.objectStore('products');
+        for(const p of cleaned) store.put(p);
+        tx.oncomplete=resolve;
+        tx.onerror=()=>reject(tx.error);
+        tx.onabort=()=>reject(tx.error||new Error('Restore failed'));
+      });
+
+      if(typeof loadProducts === 'function') await loadProducts();
+      if(typeof render === 'function') await render();
+      else if(typeof renderProducts === 'function') await renderProducts();
+
+      const el=document.getElementById('backupStatus');
+      if(el) el.textContent=`Restore complete: ${cleaned.length} product(s) processed.`;
+      alert('Inventory restore completed.');
+    }catch(e){
+      alert('Could not restore backup: '+e.message);
+    }finally{
+      event.target.value='';
+    }
+  };
+})();
+</script>
+
+
+<script id="pwa-register">
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
 }
 </script>
 
