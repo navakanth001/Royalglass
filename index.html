@@ -163,7 +163,7 @@ button{min-width:44px}
 .print-settings-simple label{flex:1;color:#697586;font-size:13px}
 .print-settings-simple select{display:block;width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccd4df;border-radius:9px;background:#fff;font-size:16px;margin-top:5px}.qty-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}.qty-quick button{min-height:42px!important;padding:6px!important;background:#eaf2fb;border:1px solid #cbd9e8;border-radius:9px;font-weight:700}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .print-buttons{display:flex;gap:8px;margin-top:10px}
-.print-buttons button{flex:1;justify-content:center}
+.print-buttons button{flex:1;justify-content:center}.selection-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding:9px 10px;background:#f5f8fc;border-radius:10px}.selection-count{font-size:13px;color:#596779}.selection-tools button{padding:8px 10px;min-height:38px}.product-select{display:flex;align-items:center;gap:7px;margin-right:2px}.product-select input{width:22px;height:22px;accent-color:var(--brand-blue);margin:0}.selected-card{border-color:#2b63a7!important;background:#f8fbff!important}.selected-row{background:#f8fbff}.desktop-table input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand-blue)}
 .products-section{margin-top:18px}
 .section-title h2{margin:0;font-size:21px}.section-title p{margin:3px 0 10px}
 .mobile-products{display:none}
@@ -186,7 +186,7 @@ button{min-width:44px}
   .section-title p{margin:2px 0 7px}
   .product-card{padding:7px 8px;border-radius:11px;margin-bottom:5px}
   .compact-main{align-items:center;gap:7px}
-  .product-info{min-width:0;flex:1}
+  .product-info{min-width:0;flex:1}.product-select input{width:20px;height:20px}
   .product-card h3{font-size:15px;line-height:1.1;margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .product-price{font-size:13px;margin-top:1px}
   .stock-box{min-width:50px;padding:4px 6px;border-radius:8px}
@@ -228,13 +228,13 @@ button{min-width:44px}
       <label>Label size<select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label>
       <label>Number of labels<select id="labelCopies" class="sr-only"><option>1</option><option>5</option><option>10</option><option>20</option></select><div class="qty-quick"><button type="button" onclick="setLabelQty(1)">1</button><button type="button" onclick="setLabelQty(5)">5</button><button type="button" onclick="setLabelQty(10)">10</button><button type="button" onclick="setLabelQty(20)">20</button></div><input id="labelCustom" type="number" min="1" max="500" inputmode="numeric" placeholder="Custom (e.g. 12)" oninput="syncLabelQty()"></label>
     </div>
-    <div class="print-buttons"><button class="secondary" onclick="printSelected()">🖨️ Print matching products</button><button class="secondary" onclick="printAll()">🏷️ Print all labels</button></div>
+    <div class="selection-tools"><span id="selectionCount" class="selection-count">0 products selected</span><div style="display:flex;gap:6px"><button type="button" class="secondary" onclick="selectAllVisible()">Select all</button><button type="button" class="secondary" onclick="clearSelection()">Clear</button></div></div><div class="print-buttons"><button id="printSelectedBtn" class="secondary" onclick="printSelected()" disabled>🖨️ Print selected</button><button class="secondary" onclick="printAll()">🏷️ Print all</button></div>
   </details>
 </section>
 
 <section class="products-section">
-  <div class="section-title"><div><h2>Your Products</h2><p class="muted">Add products, change stock, or print a label.</p></div></div>
-  <div class="desktop-table"><table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="section-title"><div><h2>Your Products</h2><p class="muted">Select products below when you want to print their barcodes.</p></div></div>
+  <div class="desktop-table"><table><thead><tr><th>Select</th><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
   <div id="mobileProducts" class="mobile-products"></div>
   <div class="pagination"><button id="prevPage" class="secondary" onclick="previousPage()">← Previous</button><span id="pageInfo" class="muted">Page 1 of 1 · 0 products</span><button id="nextPage" class="secondary" onclick="nextPage()">Next →</button></div>
 </section>
@@ -253,6 +253,7 @@ button{min-width:44px}
 <script>
 let currentPage = 1;
 const PAGE_SIZE = 5;
+const selectedProductIds = new Set();
 
 let db,products=[],editing=null;
 let scanStream=null,scannerRunning=false,scannedProductId=null,pendingScannedBarcode=null;
@@ -268,7 +269,7 @@ function clearForm(){editing=null;$('dlgTitle').textContent='Add product';$('nam
 function edit(id){let p=products.find(x=>x.id===id);editing=id;$('dlgTitle').textContent='Edit product';for(let k of ['name','sku','barcode','buy','sell','stock','low'])$(k).value=p[k];productDlg.showModal()}
 async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),buy:+$('buy').value||0,sell:+$('sell').value||0,stock:+$('stock').value||0,low:+$('low').value||0};if(!p.name||!p.sku||!p.barcode)return alert('Please enter the product name and barcode.');if(products.some(x=>x.sku===p.sku&&x.id!==p.id)||products.some(x=>x.barcode===p.barcode&&x.id!==p.id))return alert('This SKU or barcode is already used by another product.');const cameFromScan=!!pendingScannedBarcode&&normalizeBarcode(p.barcode)===normalizeBarcode(pendingScannedBarcode);if(editing)products=products.map(x=>x.id===editing?p:x);else products.push(p);await putAll();productDlg.close();render();if(cameFromScan){$('scanner').style.setProperty('display','block','important');scannedProductId=p.id;showScanResult(p);$('scanStatus').textContent='Product added: '+p.name+' — barcode '+p.barcode;pendingScannedBarcode=null;}else if(!editing){pendingScannedBarcode=null;}}
 async function stock(id,d){let p=products.find(x=>x.id===id);if(d<0&&p.stock<1)return alert('No stock available.');p.stock+=d;await putAll();render()}
-async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);await putAll();render()}}
+async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);selectedProductIds.delete(id);await putAll();render()}}
 function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){
   const query=String($('q')?.value||'').toLowerCase().trim();
@@ -279,8 +280,8 @@ function render(){
   const begin=(currentPage-1)*PAGE_SIZE;
   const a=filtered.slice(begin,begin+PAGE_SIZE);
 
-  $('rows').innerHTML=a.map(p=>`<tr><td><strong>${esc(p.name)}</strong></td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products yet. Tap “Add Product” above.</td></tr>';
-  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''}"><div class="product-main compact-main"><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-price">${fmt(p.sell)}</div></div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button aria-label="Decrease stock" title="Decrease stock" onclick="stock('${p.id}',-1)">− 1</button><button aria-label="Increase stock" title="Increase stock" onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" aria-label="Edit product" title="Edit product" onclick="edit('${p.id}')">✏️</button><button class="secondary" aria-label="Print label" title="Print label" onclick="printOne('${p.id}')">🏷️</button><button class="danger" aria-label="Delete product" title="Delete product" onclick="del('${p.id}')">🗑️</button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
+  $('rows').innerHTML=a.map(p=>`<tr class="${selectedProductIds.has(p.id)?'selected-row':''}"><td><input type="checkbox" aria-label="Select ${esc(p.name)}" ${selectedProductIds.has(p.id)?'checked':''} onchange="toggleProductSelection('${p.id}',this.checked)"></td><td><strong>${esc(p.name)}</strong></td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=7>No products yet. Tap “Add Product” above.</td></tr>';
+  $('mobileProducts').innerHTML=a.map(p=>`<article class="product-card ${p.stock<=p.low?'is-low':''} ${selectedProductIds.has(p.id)?'selected-card':''}"><div class="product-main compact-main"><label class="product-select" title="Select product"><input type="checkbox" aria-label="Select ${esc(p.name)}" ${selectedProductIds.has(p.id)?'checked':''} onchange="toggleProductSelection('${p.id}',this.checked)"></label><div class="product-info"><h3>${esc(p.name)}</h3><div class="product-price">${fmt(p.sell)}</div></div><div class="stock-box"><span>Stock</span><strong>${p.stock}</strong></div></div><div class="quick-actions"><button aria-label="Decrease stock" title="Decrease stock" onclick="stock('${p.id}',-1)">− 1</button><button aria-label="Increase stock" title="Increase stock" onclick="stock('${p.id}',1)">＋ 1</button><button class="secondary" aria-label="Edit product" title="Edit product" onclick="edit('${p.id}')">✏️</button><button class="danger" aria-label="Delete product" title="Delete product" onclick="del('${p.id}')">🗑️</button></div></article>`).join('')||'<div class="empty-state"><div>📦</div><strong>No products yet</strong><span>Start by adding your first product.</span><button onclick="productDlg.showModal();clearForm()">＋ Add First Product</button></div>';
 
   $('mP').textContent=products.length;
   $('mU').textContent=products.reduce((a,p)=>a+p.stock,0);
@@ -291,7 +292,13 @@ function render(){
   if(info) info.textContent=`Page ${currentPage} of ${totalPages} · ${filtered.length} products`;
   if(prev) prev.disabled=currentPage<=1;
   if(next) next.disabled=currentPage>=totalPages;
+  updateSelectionUI();
 }
+function toggleProductSelection(id,checked){if(checked)selectedProductIds.add(id);else selectedProductIds.delete(id);render();}
+function getVisibleProducts(){const query=String($('q')?.value||'').toLowerCase().trim();return products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v??'').toLowerCase().includes(query)));}
+function selectAllVisible(){getVisibleProducts().forEach(p=>selectedProductIds.add(p.id));render();}
+function clearSelection(){selectedProductIds.clear();render();}
+function updateSelectionUI(){const n=selectedProductIds.size;const el=$('selectionCount');if(el)el.textContent=`${n} product${n===1?'':'s'} selected`;const b=$('printSelectedBtn');if(b)b.disabled=n===0;}
 function previousPage(){if(currentPage>1){currentPage--;render();}}
 function nextPage(){
   const query=String($('q')?.value||'').toLowerCase().trim();
@@ -339,8 +346,7 @@ function setLabelQty(n){$('labelCopies').value=String(n);$('labelCustom').value=
 function syncLabelQty(){const x=$('labelCustom');if(x.value){const n=Math.max(1,Math.min(500,Math.floor(+x.value||1)));$('labelCopies').value=String(n);}}
 function getLabelQty(){const custom=Math.floor(+$('labelCustom').value||0);if(custom>0)return Math.min(500,custom);return +$('labelCopies').value||1;}
 function printLabels(a){applyLabelSize();const c=getLabelConfig(),copies=getLabelQty();let items=[];a.forEach(p=>{for(let i=0;i<copies;i++)items.push(label(p))});$('labels').innerHTML=`<div class="labelgrid ${c.cls}" style="--label-w:${c.w};--label-h:${c.h}">${items.join('')}</div>`;let old=document.getElementById('dynamicPrintStyle');if(old)old.remove();let st=document.createElement('style');st.id='dynamicPrintStyle';st.textContent=`@media print{@page{size:${c.page} ${c.orientation};margin:0}.labelgrid.a4{grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.labelgrid.small,.labelgrid.medium,.labelgrid.large{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.small .label,.labelgrid.medium .label,.labelgrid.large .label{margin:0 auto}}`;document.head.appendChild(st);requestAnimationFrame(()=>window.print())}
-function printOne(id){let p=products.find(p=>p.id===id);if(p)printLabels([p])}
-function printSelected(){let s=$('q').value.toLowerCase(),a=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v).toLowerCase().includes(s)));if(!a.length)return alert('No products to print.');printLabels(a)}
+function printSelected(){const a=products.filter(p=>selectedProductIds.has(p.id));if(!a.length)return alert('Select at least one product first.');printLabels(a)}
 function printAll(){if(!products.length)return alert('No products to print.');printLabels(products)}
 window.onafterprint=()=>{$('labels').innerHTML=''}
 window.addEventListener('pagehide',stopScanner)
