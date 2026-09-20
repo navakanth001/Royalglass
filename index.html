@@ -66,6 +66,67 @@ button{min-width:44px}
 }
 </style>
 
+
+<style id="phone-ui-polish">
+@media (max-width:700px){
+  header{
+    padding-top:4px !important;
+    padding-bottom:8px !important;
+    gap:8px !important;
+  }
+  header h1{
+    font-size:32px !important;
+    line-height:1.08 !important;
+    margin:0 0 4px !important;
+  }
+  header > div:first-child .muted{
+    font-size:14px !important;
+    line-height:1.25 !important;
+  }
+  header > div:last-child{
+    gap:8px !important;
+  }
+  header > div:last-child button{
+    width:150px !important;
+    min-width:150px !important;
+    max-width:150px !important;
+    height:46px !important;
+    min-height:46px !important;
+    padding:9px 10px !important;
+    white-space:nowrap !important;
+    line-height:1 !important;
+    flex:0 0 150px !important;
+  }
+  .toolbar{
+    gap:7px !important;
+  }
+  .toolbar .print-settings{
+    gap:7px !important;
+  }
+  .toolbar > button{
+    min-height:46px !important;
+  }
+}
+@media (max-width:430px){
+  header{
+    flex-direction:column !important;
+  }
+  header > div:first-child{
+    width:100% !important;
+  }
+  header > div:last-child{
+    width:100% !important;
+    display:flex !important;
+  }
+  header > div:last-child button{
+    width:calc(50% - 4px) !important;
+    min-width:0 !important;
+    max-width:none !important;
+    flex:1 1 0 !important;
+  }
+}
+</style>
+
 </head>
 <body><div class="wrap">
 <header style="position:sticky;top:0;z-index:20;background:#f5f7fa;padding-top:8px;padding-bottom:10px"><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
