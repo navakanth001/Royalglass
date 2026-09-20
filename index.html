@@ -214,6 +214,39 @@ button{min-width:44px}
 .history-page-heading,.excel-page-heading{margin:0 0 10px}.history-page-heading h2,.excel-page-heading h2{font-size:22px;margin:0 0 2px}.history-page-heading p,.excel-page-heading p{margin:0}.history-filters{gap:6px;margin-bottom:10px}.filter-row{gap:5px}.filter-btn{min-height:34px;padding:6px 14px;border-radius:999px;font-size:11px}.history-list{gap:6px}.history-item{grid-template-columns:30px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:8px 7px;border-radius:9px;box-shadow:0 1px 2px rgba(20,50,80,.03)}.history-product-icon{width:30px;height:30px;border-radius:7px;background:#f5f7fa;display:grid;place-items:center;font-size:16px}.history-main{min-width:0}.history-name{font-size:12px}.history-time{font-size:9px;white-space:nowrap}.history-change-wrap{text-align:center;min-width:48px}.history-change{display:inline-block;font-size:12px;line-height:1;padding:4px 7px;border-radius:999px}.history-change.add{background:#dcf7e7;color:#13834a}.history-change.remove{background:#ffe1e1;color:#c62828}.history-label{font-size:8px;font-weight:600;margin-top:2px}.history-label.add{color:#16834b}.history-label.remove{color:#c62828}.history-stock{text-align:right;min-width:44px}.history-stock span{display:block;font-size:8px;color:#697586}.history-stock strong{display:block;font-size:14px;line-height:1.1;color:#17202a;margin-top:1px}.excel-card{max-width:none;margin:0}.excel-menu{display:flex;flex-direction:column;gap:7px}.excel-menu-item{width:100%;min-height:68px!important;display:grid;grid-template-columns:42px minmax(0,1fr) 16px;align-items:center;gap:9px;text-align:left;background:#fff!important;color:#17202a!important;border:1px solid #dde3eb!important;border-radius:10px!important;padding:9px!important;box-shadow:0 1px 2px rgba(20,50,80,.03)}.excel-menu-icon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:20px;font-weight:800}.excel-import .excel-menu-icon{background:#22b55b}.excel-export .excel-menu-icon{background:#ef3d3d}.excel-template .excel-menu-icon{background:#0b73df}.excel-menu-copy strong{display:block;font-size:12px;line-height:1.15}.excel-menu-copy small{display:block;color:#697586;font-size:9px;line-height:1.25;margin-top:2px}.excel-arrow{font-size:22px;color:#9aa5b1;text-align:center}.excel-tip{display:flex;gap:9px;margin-top:9px;padding:10px;border-radius:10px;background:#eef5ff;color:#17324f}.tip-icon{font-size:19px}.excel-tip strong{font-size:11px}.excel-tip p{margin:2px 0 0;color:#697586;font-size:9px;line-height:1.3}.excel-card #excelPreview{font-size:12px}
 @media(max-width:700px){.history-item{grid-template-columns:30px minmax(0,1fr) auto auto}.page-heading h2{font-size:22px}.excel-menu-item{min-height:70px!important}.excel-menu-copy strong{font-size:13px}.excel-menu-copy small{font-size:10px}.excel-tip p{font-size:10px}}
 </style>
+
+<style id="v38-history-polish">
+/* v38: friendlier Stock History screen inspired by the approved mobile reference. */
+#historyView{padding-top:2px}
+.history-page-heading{padding:4px 0 8px;border-bottom:1px solid #e1e7ef;margin-bottom:12px}
+.history-page-heading h2{font-size:25px!important;line-height:1.12!important;letter-spacing:-.3px}
+.history-page-heading p{font-size:13px;color:#697586;line-height:1.35}
+.history-filters{gap:8px;margin-bottom:14px}
+.filter-row{gap:7px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-btn{min-height:40px;padding:7px 16px;font-size:12px;border-radius:999px;background:#edf5fd;border-color:#d6e3ef;box-shadow:0 1px 1px rgba(20,50,80,.03)}
+.filter-btn.active{box-shadow:0 2px 5px rgba(11,78,162,.16)}
+.history-list{gap:7px}
+.history-item{min-height:58px;grid-template-columns:34px minmax(0,1fr) auto auto;gap:8px;padding:9px 9px;border-radius:12px;border:1px solid #e0e6ed;box-shadow:0 2px 5px rgba(20,50,80,.04)}
+.history-product-icon{width:34px;height:34px;border-radius:9px;background:#f2f7fc;font-size:17px}
+.history-name{font-size:13px}
+.history-time{font-size:9px;color:#7b8794}
+.history-change-wrap{min-width:52px}
+.history-change{font-size:12px;padding:5px 8px}
+.history-label{font-size:8px}
+.history-stock{min-width:48px}
+.history-stock span{font-size:8px}
+.history-stock strong{font-size:15px}
+.history-empty{margin-top:4px;padding:42px 18px 38px;border:1px solid #dce5ee;border-radius:16px;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);box-shadow:0 2px 7px rgba(20,50,80,.03);display:flex;flex-direction:column;align-items:center;gap:7px}
+.history-empty-icon{width:64px;height:64px;border-radius:18px;background:#edf5ff;display:grid;place-items:center;font-size:31px;margin-bottom:5px}
+.history-empty strong{font-size:18px;color:#17202a}
+.history-empty span{font-size:13px;line-height:1.45;color:#697586;max-width:290px}
+.history-tip{display:flex;gap:11px;align-items:flex-start;margin-top:12px;padding:14px 15px;border-radius:14px;background:#eef6ff;border:1px solid #e0ebf8}
+.history-tip-icon{font-size:22px;line-height:1}
+.history-tip strong{font-size:13px;color:#17324f}
+.history-tip p{margin:3px 0 0;color:#697586;font-size:11px;line-height:1.4}
+@media(max-width:430px){.history-page-heading h2{font-size:24px!important}.filter-btn{min-height:38px;padding:7px 14px}.history-item{grid-template-columns:32px minmax(0,1fr) auto auto;padding:8px}.history-product-icon{width:32px;height:32px}.history-empty{padding-top:36px;padding-bottom:32px}}
+</style>
 </head>
 <body><div class="wrap">
 <header class="app-header">
@@ -240,6 +273,7 @@ button{min-width:44px}
       <button class="filter-btn active" type="button" onclick="setHistoryDate('today',this)">Today</button>
       <button class="filter-btn" type="button" onclick="setHistoryDate('week',this)">This Week</button>
       <button class="filter-btn" type="button" onclick="setHistoryDate('month',this)">This Month</button>
+      <button class="filter-btn" type="button" onclick="setHistoryDate('all',this)">All Time</button>
     </div>
   </div>
   <div id="historyList" class="history-list"></div>
@@ -323,7 +357,7 @@ function historyMatches(item){
 function renderHistory(){
   const el=$('historyList'); if(!el)return;
   const items=loadHistory().filter(historyMatches).sort((a,b)=>new Date(b.at)-new Date(a.at));
-  if(!items.length){el.innerHTML='<div class="history-empty">📊<br><strong>No stock changes yet</strong><br><span>When you add or remove stock, it will appear here.</span></div>';return;}
+  if(!items.length){el.innerHTML='<div class="history-empty"><div class="history-empty-icon" aria-hidden="true">📦</div><strong>No stock changes yet</strong><span>When you add or remove stock, it will appear here.</span></div><div class="history-tip"><div class="history-tip-icon">💡</div><div><strong>Tip</strong><p>Use +1 or −1 on a product to keep your stock history updated.</p></div></div>';return;}
   el.innerHTML=items.map(i=>{const d=new Date(i.at);const date=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});const time=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});const sign=i.delta>0?'+':'';const cls=i.delta>0?'add':'remove';const text=i.delta>0?'Stock added':'Stock removed';return `<article class="history-item"><div class="history-product-icon">📦</div><div class="history-main"><div class="history-name">${esc(i.productName)}</div><div class="history-time">${date}, ${time}</div></div><div class="history-change-wrap"><div class="history-change ${cls}">${sign}${i.delta}</div><div class="history-label ${cls}">${text}</div></div><div class="history-stock"><span>Stock now</span><strong>${i.stock}</strong></div></article>`}).join('');
 }
 function setHistoryType(type,btn){historyType=type;document.querySelectorAll('#historyTypeFilters .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHistory()}
