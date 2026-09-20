@@ -109,63 +109,56 @@ window.addEventListener('pagehide',stopScanner)
 
 async function openScanner(){
   const panel=$('scanner');
-  clearScanResult();
-  panel.style.display='block';
-  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  const video=$('camera');
   const status=$('scanStatus');
-  status.textContent='Requesting camera permission…';
+  if(!panel || !video){ alert('Scanner panel is missing.'); return; }
+
+  panel.style.setProperty('display','block','important');
+  panel.hidden=false;
+  panel.removeAttribute('hidden');
+  if($('cameraPlaceholder')) $('cameraPlaceholder').style.display='none';
+  video.style.setProperty('display','block','important');
+  video.style.width='100%';
+  video.style.height='auto';
+  video.style.minHeight='220px';
+  video.style.objectFit='cover';
+  video.setAttribute('playsinline','');
+  video.setAttribute('autoplay','');
+  video.muted=true;
+
+  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  if(status) status.textContent='Requesting camera permission…';
 
   if(!window.isSecureContext && location.hostname!=='localhost'){
-    status.textContent='Camera requires the HTTPS version of this app. Open the GitHub Pages https:// address.';
+    if(status) status.textContent='Camera requires the HTTPS version of this app.';
     return;
   }
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    status.textContent='This browser cannot access the camera. Please use Chrome on Android.';
+  if(!navigator.mediaDevices?.getUserMedia){
+    if(status) status.textContent='Camera access is not supported by this browser.';
     return;
   }
 
   try{
-    // Stop any previous stream first.
-    if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
-
-    // Prefer the rear camera. Start with a simple constraint set for maximum
-    // compatibility, then fall back if the device rejects facingMode.
-    let stream;
-    try{
-      stream=await navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:{facingMode:{exact:'environment'}}
-      });
-    }catch(firstErr){
-      stream=await navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:{facingMode:'environment'}
-      });
-    }
-
-    scanStream=stream;
-    const video=$('camera');
-    $('cameraPlaceholder').style.display='none';
-    $('cameraWrap')?.classList.add('camera-live');
-    video.srcObject=stream;
-    video.muted=true;
-    video.setAttribute('playsinline','');
-    video.setAttribute('autoplay','');
+    if(scanStream) scanStream.getTracks().forEach(t=>t.stop());
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}}
+    });
+    video.srcObject=scanStream;
     await video.play();
     scannerRunning=true;
-    status.textContent='Camera is on. Point it at the barcode.';
+    if(status) status.textContent='Camera is on. Point it at the barcode.';
+    if($('cameraPlaceholder')) $('cameraPlaceholder').style.display='none';
 
-    // BarcodeDetector support varies by browser. Keep the live preview working
-    // even when automatic Code 128 detection is unavailable.
     if(!('BarcodeDetector' in window)){
-      status.textContent='Camera is working. Automatic Code 128 scanning is not supported here; use manual barcode entry.';
+      if(status) status.textContent='Camera is working. Use manual barcode entry if automatic scanning is unavailable.';
       return;
     }
 
-    let formats=[];
-    try{ formats=await BarcodeDetector.getSupportedFormats(); }catch(e){}
-    if(!formats.includes('code_128')){
-      status.textContent='Camera is working, but this browser cannot read Code 128 automatically. Use manual barcode entry.';
+    let supported=[];
+    try{ supported=await BarcodeDetector.getSupportedFormats(); }catch(e){}
+    if(!supported.includes('code_128')){
+      if(status) status.textContent='Camera is working, but Code 128 auto-detection is unavailable in this browser.';
       return;
     }
 
@@ -175,60 +168,40 @@ async function openScanner(){
       try{
         if(video.readyState>=2){
           const codes=await detector.detect(video);
-          if(codes && codes.length){
-            const value=codes[0].rawValue;
-            if(value){
-              await handleScannedBarcode(value);
-              stopScanner();
-              return;
-            }
+          if(codes?.length && codes[0].rawValue){
+            await handleScannedBarcode(codes[0].rawValue);
+            stopScanner();
+            return;
           }
         }
       }catch(e){}
       if(scannerRunning) requestAnimationFrame(scan);
     };
     requestAnimationFrame(scan);
-
   }catch(err){
     scannerRunning=false;
-    const name=err?.name || '';
-    if(name==='NotAllowedError' || name==='PermissionDeniedError'){
-      status.textContent='Camera permission was denied. In Chrome, tap the 🔒 icon beside the address → Permissions → Camera → Allow, then reload the app.';
-    }else if(name==='NotFoundError'){
-      status.textContent='No camera was found on this device.';
-    }else if(name==='NotReadableError'){
-      status.textContent='The camera is being used by another app. Close other camera apps and try again.';
-    }else{
-      status.textContent='Could not start the camera: '+(err?.message || name || 'unknown error');
+    if(status){
+      const n=err?.name||'';
+      status.textContent =
+        n==='NotAllowedError' ? 'Camera permission denied. Allow Camera for this site in Chrome settings, then try again.' :
+        n==='NotFoundError' ? 'No camera was found on this device.' :
+        n==='NotReadableError' ? 'The camera is busy in another app. Close it and try again.' :
+        'Could not start camera: '+(err?.message||n||'unknown error');
     }
   }
 }
-function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').pause();$('camera').srcObject=null;$('cameraPlaceholder').style.display='flex';$('scanner').style.display='block'}
-function showScanResult(p){scannedProductId=p.id;$('scanProductName').textContent=p.name;$('scanProductCode').textContent='SKU: '+p.sku+' • Barcode: '+p.barcode;$('scanProductStock').textContent=p.stock;$('scanResult').style.display='block';$('scanner').style.display='block';$('scanner').scrollIntoView({behavior:'smooth',block:'center'})}
-function clearScanResult(){scannedProductId=null;$('scanResult').style.display='none'}
-async function scanAdjust(delta){
-  if(!scannedProductId)return;
-  const p=products.find(x=>x.id===scannedProductId);
-  if(!p)return;
-  p.stock=Number.isFinite(Number(p.stock)) ? Number(p.stock) : Number(p.quantity)||0;
-  const next=p.stock+Number(delta);
-  if(next<0){alert('No stock available.');return}
-  p.stock=next;
-  delete p.quantity;
-  try{
-    await new Promise((res,rej)=>{
-      const tx=db.transaction('products','readwrite');
-      tx.objectStore('products').put(p);
-      tx.oncomplete=res;
-      tx.onerror=()=>rej(tx.error);
-      tx.onabort=()=>rej(tx.error||new Error('Database update failed'));
-    });
-    render();
-    showScanResult(p);
-    $('scanStatus').textContent=delta>0 ? 'Quantity increased and saved.' : 'Quantity decreased and saved.';
-  }catch(e){
-    alert('Could not save the quantity change. Please try again.');
+function stopScanner(){
+  scannerRunning=false;
+  if(scanStream){
+    scanStream.getTracks().forEach(t=>t.stop());
+    scanStream=null;
   }
+  const video=$('camera');
+  if(video) video.srcObject=null;
+  const panel=$('scanner');
+  if(panel) panel.style.setProperty('display','none','important');
+  const ph=$('cameraPlaceholder');
+  if(ph) ph.style.display='';
 }
 function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
@@ -434,41 +407,7 @@ async function saveExcelProducts(mode){
 </script>
 
 
-<script id="camera-click-toggle">
-(function(){
-  const candidates = ['scanner','cameraScanner','scannerContainer','cameraContainer','cameraPreview'];
-  function findScanner(){
-    for(const id of candidates){
-      const el=document.getElementById(id);
-      if(el) return el;
-    }
-    return null;
-  }
-  function setScannerVisible(show){
-    const el=findScanner();
-    if(!el) return;
-    el.style.display = show ? '' : 'none';
-    if(show) el.scrollIntoView({behavior:'smooth', block:'center'});
-  }
-  window.openCameraScannerUI = function(){
-    setScannerVisible(true);
-  };
-  window.closeCameraScannerUI = function(){
-    setScannerVisible(false);
-  };
-  document.addEventListener('click', function(e){
-    const b=e.target.closest('button');
-    if(!b) return;
-    const t=(b.textContent||'').toLowerCase();
-    if(t.includes('scan barcode') || t.includes('scan bar code')){
-      setTimeout(()=>setScannerVisible(true), 0);
-    }
-    if(t.includes('stop camera') || t.includes('close scanner') || t.includes('close camera')){
-      setScannerVisible(false);
-    }
-  });
-})();
-</script>
+
 
 
 <section class="card" id="backupTools" style="margin-top:16px">
