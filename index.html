@@ -35,7 +35,7 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <div class="card"><div class="muted">Low stock</div><div class="metric" id="mL">0</div></div>
 <div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
 </div>
-<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="render()">
+<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="render()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}"><button class="secondary" onclick="findBarcode($('q').value)">🔎 Find Barcode</button>
 <div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
 <button class="secondary" onclick="backup()">💾 Backup</button><button class="secondary" onclick="restoreInput.click()">♻️ Restore</button>
 <input id="restoreInput" type="file" accept=".json" hidden onchange="restoreFile(event)"></div>
@@ -228,22 +228,51 @@ function stopScanner(){
   if(ph) ph.style.display='';
 }
 
-async function handleScannedBarcode(value){
-  const code=String(value||'').trim();
-  if(!code) return;
-  // Match barcode exactly, preserving leading zeros.
-  const p=products.find(x=>String(x.barcode??'').trim()===code);
-  if(p){
-    $('q').value=code;
-    render();
-    showScanResult(p);
-    $('scanStatus').textContent='Barcode found: '+code;
+function normalizeBarcode(value){
+  let v=String(value??'').trim();
+  // Excel sometimes turns a numeric barcode such as 12345 into "12345.0".
+  // Only remove the .0 artifact when it is clearly an Excel numeric conversion.
+  if(/^\d+\.0+$/.test(v)) v=v.replace(/\.0+$/,'');
+  return v;
+}
+function findProductByBarcode(value){
+  const code=normalizeBarcode(value);
+  if(!code) return null;
+  return products.find(p=>normalizeBarcode(p.barcode)===code) || null;
+}
+function showScanResult(p){
+  const box=$('scanResult');
+  if(box){
+    box.style.display='block';
+    box.innerHTML='<b>'+esc(p.name)+'</b><br>Barcode: '+esc(p.barcode)+'<br>SKU: '+esc(p.sku)+'<br>Stock: '+esc(p.stock);
+  }
+}
+async function findBarcode(value){
+  const code=normalizeBarcode(value);
+  if(!code){
+    $('scanStatus').textContent='Enter a barcode first.';
     return;
   }
-  // Barcode was read successfully but is not in the local inventory.
-  $('scanStatus').textContent='Barcode read: '+code+' — product not found in inventory.';
+  const p=findProductByBarcode(code);
   $('q').value=code;
   render();
+  if(p){
+    showScanResult(p);
+    $('scanStatus').textContent='Product found: '+p.name+' — barcode '+p.barcode;
+    // Put the exact product barcode into the product form only when useful;
+    // do not open the editor automatically.
+    return p;
+  }
+  $('scanStatus').textContent='Barcode '+code+' was not found in this inventory.';
+  return null;
+}
+async function handleScannedBarcode(value){
+  const p=await findBarcode(value);
+  if(p){
+    return;
+  }
+  const code=normalizeBarcode(value);
+  // Offer to add a newly scanned barcode.
   clearForm();
   $('barcode').value=code;
   if(typeof productDlg!=='undefined' && productDlg && !productDlg.open){
