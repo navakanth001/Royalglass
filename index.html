@@ -163,7 +163,7 @@ button{min-width:44px}
 .print-settings-simple label{flex:1;color:#697586;font-size:13px}
 .print-settings-simple select{display:block;width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccd4df;border-radius:9px;background:#fff;font-size:16px;margin-top:5px}.qty-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}.qty-quick button{min-height:42px!important;padding:6px!important;background:#eaf2fb;border:1px solid #cbd9e8;border-radius:9px;font-weight:700;color:#17324F!important}.qty-quick button.active{background:#0B4EA2!important;color:#fff!important;border-color:#0B4EA2!important;box-shadow:0 0 0 2px #cfe0f5}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .print-buttons{display:flex;gap:8px;margin-top:10px}
-.print-buttons button{flex:1;justify-content:center}.selection-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding:9px 10px;background:#f5f8fc;border-radius:10px}.selection-count{font-size:13px;color:#596779}.selection-tools button{padding:8px 10px;min-height:38px}.product-select{display:flex;align-items:center;gap:7px;margin-right:2px}.product-select input{width:22px;height:22px;accent-color:var(--brand-blue);margin:0}.selected-card{border-color:#2b63a7!important;background:#f8fbff!important}.selected-row{background:#f8fbff}.desktop-table input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand-blue)}
+.print-buttons button{flex:1;justify-content:center}.selection-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding:9px 10px;background:#f5f8fc;border-radius:10px}.selection-count{font-size:13px;color:#596779}.selection-tools button{padding:8px 10px;min-height:38px}.product-select{display:flex;align-items:center;gap:7px;margin-right:2px}.product-select input{width:22px;height:22px;accent-color:var(--brand-blue);margin:0}.selected-card{border-color:#2b63a7!important;background:#f8fbff!important;box-shadow:0 0 0 1px #2b63a7 inset}.selected-row{background:#f8fbff}.desktop-table input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand-blue)}
 .products-section{margin-top:18px}
 .section-title h2{margin:0;font-size:21px}.section-title p{margin:3px 0 10px}
 .mobile-products{display:none}
@@ -186,20 +186,20 @@ button{min-width:44px}
   .section-title p{margin:2px 0 7px}
   .product-card{padding:7px 8px;border-radius:11px;margin-bottom:5px}
   .compact-main{align-items:center;gap:7px}
-  .product-info{min-width:0;flex:1}.product-select input{width:20px;height:20px}
-  .product-card h3{font-size:15px;line-height:1.1;margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .product-info{min-width:0;flex:1}.product-select input{width:24px;height:24px;cursor:pointer}
+  .product-card h3{font-size:16px;line-height:1.1;margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .product-price{font-size:13px;margin-top:1px}
-  .stock-box{min-width:50px;padding:4px 6px;border-radius:8px}
+  .stock-box{min-width:54px;padding:4px 6px;border-radius:8px}
   .stock-box span{font-size:9px}
-  .stock-box strong{font-size:19px;line-height:1}
-  .quick-actions{display:grid;grid-template-columns:1fr 1fr repeat(3,38px);gap:4px;margin-top:5px}
-  .quick-actions button{min-width:0!important;width:100%;min-height:30px!important;height:30px!important;padding:2px 2px!important;font-size:10px!important;white-space:nowrap}
-  .quick-actions button:nth-child(n+3){font-size:14px!important}
+  .stock-box strong{font-size:20px;line-height:1}
+  .quick-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 38px 38px;gap:4px;margin-top:5px}
+  .quick-actions button{min-width:0!important;width:100%;min-height:34px!important;height:34px!important;padding:2px 2px!important;font-size:11px!important;white-space:nowrap;border-radius:8px}
+  .quick-actions button:nth-child(n+3){font-size:15px!important}
 }
 @media(max-width:430px){
   .quick-actions{gap:4px}
-  .quick-actions button{font-size:10px!important;padding:3px 1px!important}
-  .quick-actions .danger{font-size:9px!important}
+  .quick-actions button{font-size:11px!important;padding:3px 1px!important}
+  .quick-actions .danger{font-size:14px!important}
 }
 </style>
 </head>
