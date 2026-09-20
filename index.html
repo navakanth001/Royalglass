@@ -1,3 +1,4 @@
+let currentPage=1; const PAGE_SIZE=5;
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Phone Inventory & Barcode</title>
@@ -33,11 +34,16 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <div class="card"><div class="muted">Low stock</div><div class="metric" id="mL">0</div></div>
 <div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
 </div>
-<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="render()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}"><button class="secondary" onclick="findBarcode($('q').value)">🔎 Find Barcode</button>
+<div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="resetPagination()" onkeydown="if(event.key==='Enter'){event.preventDefault();findBarcode(this.value)}"><button class="secondary" onclick="findBarcode($('q').value)">🔎 Find Barcode</button>
 <div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
 <button class="secondary" onclick="backup()">💾 Backup</button><button class="secondary" onclick="restoreInput.click()">♻️ Restore</button>
 <input id="restoreInput" type="file" accept=".json" hidden onchange="restoreFile(event)"></div>
 <table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0">
+<button id="prevPage" class="secondary" onclick="previousPage()">← Previous</button>
+<span id="pageInfo" class="muted">Page 1 of 1 · 0 products</span>
+<button id="nextPage" class="secondary" onclick="nextPage()">Next →</button>
+</div>
 <div class="scanner" id="scanner" style="display:block"><div class="camera-wrap" id="cameraWrap"><video id="camera" playsinline muted autoplay></video><div class="camera-placeholder" id="cameraPlaceholder">📷 Camera is off<br><span>Tap “Scan Barcode” below to start</span></div><div class="scan-frame"></div><div class="scan-help">Place the barcode inside the box</div></div><div class="scan-row"><button onclick="openScanner()">📷 Scan Barcode</button><button class="secondary" onclick="stopScanner()">✕ Stop camera</button><button class="secondary" onclick="manualScan()">Enter barcode manually</button></div><div class="scan-status" id="scanStatus">Camera scanner uses your phone browser. Camera access requires HTTPS or localhost.</div><div class="scan-result" id="scanResult"><div class="muted">Scanned product</div><strong id="scanProductName"></strong><div id="scanProductCode" class="muted"></div><div class="scan-result stock-number" id="scanProductStock">0</div><div class="muted">Current quantity</div><div class="scan-actions"><button onclick="scanAdjust(-1)">➖ Decrease 1</button><button onclick="scanAdjust(1)">➕ Increase 1</button><button class="secondary" onclick="editScannedProduct()">Edit product</button></div></div></div><p class="muted">Products and stock are stored on this phone using IndexedDB. Putting this app online does not upload your inventory. Back up regularly.</p></div>
 
 <dialog id="productDlg"><h2 id="dlgTitle">Add product</h2><div class="form">
@@ -64,7 +70,33 @@ async function save(){let p={id:editing||crypto.randomUUID(),name:$('name').valu
 async function stock(id,d){let p=products.find(x=>x.id===id);if(d<0&&p.stock<1)return alert('No stock available.');p.stock+=d;await putAll();render()}
 async function del(id){if(confirm('Delete this product?')){products=products.filter(x=>x.id!==id);await putAll();render()}}
 function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function render(){let s=$('q').value.toLowerCase(),a=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v).toLowerCase().includes(s)));$('rows').innerHTML=a.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products</td></tr>';$('mP').textContent=products.length;$('mU').textContent=products.reduce((a,p)=>a+p.stock,0);$('mL').textContent=products.filter(p=>p.stock<=p.low).length;$('mV').textContent=fmt(products.reduce((a,p)=>a+p.stock*p.buy,0))}
+function render(){
+  const query=String($('q')?.value||'').toLowerCase().trim();
+  const filtered=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v??'').toLowerCase().includes(query)));
+  const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
+  if(currentPage>totalPages) currentPage=totalPages;
+  if(currentPage<1) currentPage=1;
+  const begin=(currentPage-1)*PAGE_SIZE;
+  const a=filtered.slice(begin,begin+PAGE_SIZE);
+  $('rows').innerHTML=a.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${esc(p.barcode)}</td><td>${p.stock<=p.low?'<b style="color:#c62828">':''}${p.stock}${p.stock<=p.low?'</b>':''}</td><td>${fmt(p.sell)}</td><td><button onclick="stock('${p.id}',1)">＋</button> <button class="secondary" onclick="stock('${p.id}',-1)">−</button> <button class="secondary" onclick="edit('${p.id}')">Edit</button> <button class="secondary" onclick="printOne('${p.id}')">Label</button> <button class="danger" onclick="del('${p.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No products</td></tr>';
+  $('mP').textContent=products.length;
+  $('mU').textContent=products.reduce((a,p)=>a+p.stock,0);
+  $('mL').textContent=products.filter(p=>p.stock<=p.low).length;
+  $('mV').textContent=fmt(products.reduce((a,p)=>a+p.stock*p.buy,0));
+  const info=$('pageInfo'), prev=$('prevPage'), next=$('nextPage');
+  if(info) info.textContent=`Page ${currentPage} of ${totalPages} · ${filtered.length} products`;
+  if(prev) prev.disabled=currentPage<=1;
+  if(next) next.disabled=currentPage>=totalPages;
+}
+function previousPage(){if(currentPage>1){currentPage--;render();}}
+function nextPage(){
+  const query=String($('q')?.value||'').toLowerCase().trim();
+  const count=products.filter(p=>[p.name,p.sku,p.barcode].some(v=>String(v??'').toLowerCase().includes(query))).length;
+  const totalPages=Math.max(1,Math.ceil(count/PAGE_SIZE));
+  if(currentPage<totalPages){currentPage++;render();}
+}
+function resetPagination(){currentPage=1;render();}
+
 const CODE128B = [
   '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
   '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
@@ -200,14 +232,17 @@ function stopScanner(){
   }
   const wrap=$('cameraWrap');
   if(wrap) wrap.style.display='none';
+  // Keep the scanner controls visible so the user can tap
+  // "Scan Barcode" again after stopping the camera.
   const panel=$('scanner');
   if(panel){
-    panel.style.setProperty('display','none','important');
-    panel.hidden=true;
+    panel.style.setProperty('display','block','important');
+    panel.hidden=false;
   }
   const ph=$('cameraPlaceholder');
-  if(ph) ph.style.display='';
-}
+  if(ph) ph.style.display='block';
+  const status=$('scanStatus');
+  if(status) status.textContent='Camera is off. Tap “Scan Barcode” to start again.';
 
 
 function normalizeBarcode(value){
