@@ -278,6 +278,20 @@ button{min-width:44px}
 <style id="v43-statement-ui">
 .statement-card{max-width:760px!important;margin:0 auto!important}.statement-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.statement-actions button{flex:1;min-width:140px}.statement-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.statement-stat{background:#f7f9fc;border:1px solid #e1e7ef;border-radius:10px;padding:9px}.statement-stat span{display:block;color:#697586;font-size:9px}.statement-stat strong{display:block;font-size:15px;margin-top:2px}.statement-table-wrap{overflow:auto;border:1px solid #dde4ec;border-radius:10px}.statement-table{width:100%;border-collapse:collapse;font-size:10px;min-width:560px}.statement-table th,.statement-table td{padding:8px;border-bottom:1px solid #edf1f5;text-align:left}.statement-table th{background:#f6f8fb;color:#526273;font-size:9px}.statement-table td.num,.statement-table th.num{text-align:right}.statement-note{font-size:10px;color:#697586;margin:9px 0 0}.statement-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.statement-filter-grid label{font-size:11px;font-weight:700}.statement-filter-grid select,.statement-filter-grid input{margin-top:4px}.statement-range-row{display:flex;gap:6px;overflow:auto;margin:10px 0}.statement-range-row .filter-btn{min-height:34px;padding:6px 12px;font-size:10px}.statement-preview-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.statement-preview-head h3{margin:0;font-size:18px}.statement-preview-head p{margin:3px 0 0;color:#697586;font-size:10px}@media(max-width:520px){.statement-summary{grid-template-columns:repeat(2,1fr)}.statement-filter-grid{grid-template-columns:1fr}.statement-card{padding:0 0 15px!important}}
 </style>
+
+<style id="history-statement-header-fix">
+/* Keep Statement on the same row as Stock History. */
+.history-heading-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;width:100%!important;min-width:0!important;flex-wrap:nowrap!important}
+.history-heading-row h2{margin:0!important;min-width:0!important;flex:1 1 auto!important}
+.history-statement-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:40px!important;min-height:40px!important;padding:0 11px!important;border:1px solid #cfe0f2!important;border-radius:11px!important;background:#edf5ff!important;color:#0b4ea2!important;font-size:12px!important;font-weight:800!important;white-space:nowrap!important;line-height:1!important;cursor:pointer!important}
+.history-statement-btn svg{display:block!important;width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;max-width:17px!important;max-height:17px!important;flex:0 0 17px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+@media(max-width:520px){
+  .history-heading-row{gap:7px!important}
+  .history-heading-row h2{font-size:21px!important;line-height:1.1!important}
+  .history-statement-btn{height:38px!important;min-height:38px!important;padding:0 9px!important;font-size:11px!important;border-radius:10px!important}
+  .history-statement-btn svg{width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;max-width:16px!important;max-height:16px!important;flex-basis:16px!important}
+}
+</style>
 </head>
 <body><div class="wrap">
 <header class="app-header">
