@@ -161,7 +161,7 @@ button{min-width:44px}
 .print-card summary span,.excel-card summary span{margin-left:auto;color:#697586;font-size:13px}
 .print-settings-simple{display:flex;gap:10px;margin-top:12px}
 .print-settings-simple label{flex:1;color:#697586;font-size:13px}
-.print-settings-simple select{display:block;width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccd4df;border-radius:9px;background:#fff;font-size:16px;margin-top:5px}.qty-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}.qty-quick button{min-height:42px!important;padding:6px!important;background:#eaf2fb;border:1px solid #cbd9e8;border-radius:9px;font-weight:700}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.print-settings-simple select{display:block;width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccd4df;border-radius:9px;background:#fff;font-size:16px;margin-top:5px}.qty-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}.qty-quick button{min-height:42px!important;padding:6px!important;background:#eaf2fb;border:1px solid #cbd9e8;border-radius:9px;font-weight:700;color:#17324F!important}.qty-quick button.active{background:#0B4EA2!important;color:#fff!important;border-color:#0B4EA2!important;box-shadow:0 0 0 2px #cfe0f5}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .print-buttons{display:flex;gap:8px;margin-top:10px}
 .print-buttons button{flex:1;justify-content:center}.selection-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding:9px 10px;background:#f5f8fc;border-radius:10px}.selection-count{font-size:13px;color:#596779}.selection-tools button{padding:8px 10px;min-height:38px}.product-select{display:flex;align-items:center;gap:7px;margin-right:2px}.product-select input{width:22px;height:22px;accent-color:var(--brand-blue);margin:0}.selected-card{border-color:#2b63a7!important;background:#f8fbff!important}.selected-row{background:#f8fbff}.desktop-table input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand-blue)}
 .products-section{margin-top:18px}
@@ -193,13 +193,13 @@ button{min-width:44px}
   .stock-box span{font-size:9px}
   .stock-box strong{font-size:19px;line-height:1}
   .quick-actions{display:grid;grid-template-columns:1fr 1fr repeat(3,38px);gap:4px;margin-top:5px}
-  .quick-actions button{min-width:0!important;width:100%;min-height:32px!important;height:32px!important;padding:3px 2px!important;font-size:11px!important;white-space:nowrap}
-  .quick-actions button:nth-child(n+3){font-size:15px!important}
+  .quick-actions button{min-width:0!important;width:100%;min-height:30px!important;height:30px!important;padding:2px 2px!important;font-size:10px!important;white-space:nowrap}
+  .quick-actions button:nth-child(n+3){font-size:14px!important}
 }
 @media(max-width:430px){
   .quick-actions{gap:4px}
-  .quick-actions button{font-size:11px!important;padding:4px 1px!important}
-  .quick-actions .danger{font-size:10px!important}
+  .quick-actions button{font-size:10px!important;padding:3px 1px!important}
+  .quick-actions .danger{font-size:9px!important}
 }
 </style>
 </head>
@@ -342,14 +342,15 @@ function getLabelConfig(){
 }
 function applyLabelSize(){const c=getLabelConfig();document.documentElement.style.setProperty('--label-w',c.w);document.documentElement.style.setProperty('--label-h',c.h)}
 function label(p){return `<div class="label"><div class="print-title">${esc(p.name)}</div><div class="sku">SKU: ${esc(p.sku)}</div>${barcodeSvg(p.barcode)}<div class="code">${esc(p.barcode)}</div></div>`}
-function setLabelQty(n){$('labelCopies').value=String(n);$('labelCustom').value='';}
-function syncLabelQty(){const x=$('labelCustom');if(x.value){const n=Math.max(1,Math.min(500,Math.floor(+x.value||1)));$('labelCopies').value=String(n);}}
+function setLabelQty(n){$('labelCopies').value=String(n);$('labelCustom').value='';document.querySelectorAll('.qty-quick button').forEach(b=>b.classList.toggle('active',b.textContent.trim()===String(n)));}
+function syncLabelQty(){const x=$('labelCustom');document.querySelectorAll('.qty-quick button').forEach(b=>b.classList.remove('active'));if(x.value){const n=Math.max(1,Math.min(500,Math.floor(+x.value||1)));$('labelCopies').value=String(n);}}
 function getLabelQty(){const custom=Math.floor(+$('labelCustom').value||0);if(custom>0)return Math.min(500,custom);return +$('labelCopies').value||1;}
 function printLabels(a){applyLabelSize();const c=getLabelConfig(),copies=getLabelQty();let items=[];a.forEach(p=>{for(let i=0;i<copies;i++)items.push(label(p))});$('labels').innerHTML=`<div class="labelgrid ${c.cls}" style="--label-w:${c.w};--label-h:${c.h}">${items.join('')}</div>`;let old=document.getElementById('dynamicPrintStyle');if(old)old.remove();let st=document.createElement('style');st.id='dynamicPrintStyle';st.textContent=`@media print{@page{size:${c.page} ${c.orientation};margin:0}.labelgrid.a4{grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.labelgrid.small,.labelgrid.medium,.labelgrid.large{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.small .label,.labelgrid.medium .label,.labelgrid.large .label{margin:0 auto}}`;document.head.appendChild(st);requestAnimationFrame(()=>window.print())}
 function printSelected(){const a=products.filter(p=>selectedProductIds.has(p.id));if(!a.length)return alert('Select at least one product first.');printLabels(a)}
 function printAll(){if(!products.length)return alert('No products to print.');printLabels(products)}
 window.onafterprint=()=>{$('labels').innerHTML=''}
 window.addEventListener('pagehide',stopScanner)
+setLabelQty(1)
 
 async function openScanner(){
   const panel=$('scanner'), video=$('camera'), status=$('scanStatus'), wrap=$('cameraWrap');
