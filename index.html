@@ -6,12 +6,13 @@ body{font-family:system-ui;margin:0;background:#f5f7fa;color:#17202a}.wrap{max-w
 header{display:flex;justify-content:space-between;align-items:center;gap:10px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card,dialog{background:white;border:1px solid #dde3eb;border-radius:12px;padding:14px}.metric{font-size:24px;font-weight:700}.muted{color:#697586;font-size:13px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.print-settings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.print-settings select{padding:10px;border:1px solid #ccd4df;border-radius:8px;background:#fff}.print-settings label{font-size:13px;color:#697586}.toolbar input,input{padding:10px;border:1px solid #ccd4df;border-radius:8px}input{width:100%;box-sizing:border-box}
 table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}th{background:#eef2f6}
-button{border:0;border-radius:8px;padding:9px 12px;background:#1769e0;color:white;cursor:pointer}button.secondary{background:#e8edf5;color:#17202a}button.danger{background:#c62828}.scanner{display:none;margin:14px 0;padding:14px;background:#fff;border:1px solid #dde3eb;border-radius:12px}.camera-wrap{position:relative;width:100%;background:#111;border-radius:10px;overflow:hidden;min-height:220px}.scanner video{display:block;width:100%;height:min(60vw,360px);min-height:220px;object-fit:cover;background:#111;border-radius:10px}.scan-frame{position:absolute;left:10%;right:10%;top:25%;height:50%;border:2px solid #fff;border-radius:10px;box-shadow:0 0 0 9999px #0003;pointer-events:none}.scan-help{font-size:13px;color:#fff;position:absolute;left:0;right:0;bottom:10px;text-align:center;text-shadow:0 1px 3px #000}.scan-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.scan-status{font-size:13px;color:#697586;margin-top:8px}
+button{border:0;border-radius:8px;padding:9px 12px;background:#1769e0;color:white;cursor:pointer}button.secondary{background:#e8edf5;color:#17202a}button.danger{background:#c62828}.scanner{display:none;margin:14px 0;padding:14px;background:#fff;border:1px solid #dde3eb;border-radius:12px}.camera-wrap{position:relative;width:100%;background:#111;border-radius:10px;overflow:hidden;min-height:220px}.scanner video{display:block;width:100%;height:min(60vw,360px);min-height:220px;object-fit:cover;background:#111;border-radius:10px}.camera-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;background:#111;font-size:18px;z-index:1}.camera-placeholder span{font-size:13px;opacity:.75;margin-top:6px}.camera-wrap.camera-live .camera-placeholder{display:none}.scan-frame{position:absolute;left:10%;right:10%;top:25%;height:50%;border:2px solid #fff;border-radius:10px;box-shadow:0 0 0 9999px #0003;pointer-events:none}.scan-help{font-size:13px;color:#fff;position:absolute;left:0;right:0;bottom:10px;text-align:center;text-shadow:0 1px 3px #000}.scan-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.scan-status{font-size:13px;color:#697586;margin-top:8px}.scan-result{display:none;margin-top:12px;padding:12px;border:1px solid #d8e0ea;border-radius:10px;background:#f7f9fc}.scan-result .stock-number{font-size:28px;font-weight:700;margin:4px 0 10px}.scan-actions{display:flex;gap:8px;flex-wrap:wrap}.scan-actions button{min-width:130px}
 dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{display:grid;gap:10px}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 @media(max-width:750px){.grid{grid-template-columns:repeat(2,1fr)}th:nth-child(3),td:nth-child(3){display:none}}
 @media print{body *{visibility:hidden}.labels,.labels *{visibility:visible}.labels{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff}.no-print{display:none!important}.labelgrid{padding:5mm;gap:4mm}.label{break-inside:avoid;page-break-inside:avoid}}
 .labels{display:none}.labelgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;padding:5mm}.label{height:30mm;border:1px dashed #aaa;padding:3mm;text-align:center;overflow:hidden;box-sizing:border-box}.labelgrid.a4{grid-template-columns:repeat(3,1fr)}.labelgrid.thermal{grid-template-columns:1fr;gap:0;padding:0}.labelgrid.thermal .label{border:0;width:var(--label-w);height:var(--label-h);padding:2.5mm;margin:0 auto}.labelgrid.large .label{width:100mm;height:50mm}.labelgrid.medium .label{width:60mm;height:30mm}.labelgrid.small .label{width:50mm;height:25mm}.label .name{font-size:11px;font-weight:700}.label .sku{font-size:8px}.barcode-svg{width:100%;height:15mm;display:block}.code{font-size:8px;margin-top:1mm}.print-title{font-size:10px;font-weight:700;margin-bottom:1mm}
-</style></head>
+</style><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
 <body><div class="wrap">
 <header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
 <div class="grid">
@@ -21,11 +22,11 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <div class="card"><div class="muted">Value</div><div class="metric" id="mV">₹0</div></div>
 </div>
 <div class="toolbar"><input id="q" placeholder="Search name, SKU or barcode" oninput="render()">
-<div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="openScanner()">📷 Scan barcode</button><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
+<div class="print-settings"><label>Label size <select id="labelSize" onchange="applyLabelSize()"><option value="a4">A4 · 3 columns</option><option value="50x25">50 × 25 mm</option><option value="60x30">60 × 30 mm</option><option value="100x50">100 × 50 mm</option></select></label><label>Copies <select id="labelCopies"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></label></div><button class="secondary" onclick="printSelected()">🖨️ Print visible labels</button><button class="secondary" onclick="printAll()">🏷️ Print all barcodes</button>
 <button class="secondary" onclick="backup()">💾 Backup</button><button class="secondary" onclick="restoreInput.click()">♻️ Restore</button>
 <input id="restoreInput" type="file" accept=".json" hidden onchange="restoreFile(event)"></div>
 <table><thead><tr><th>Product</th><th>SKU</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table>
-<div class="scanner" id="scanner"><div class="camera-wrap"><video id="camera" playsinline muted autoplay></video><div class="scan-frame"></div><div class="scan-help">Place the barcode inside the box</div></div><div class="scan-row"><button onclick="stopScanner()">Close scanner</button><button class="secondary" onclick="manualScan()">Enter barcode manually</button></div><div class="scan-status" id="scanStatus">Camera scanner uses your phone browser. Camera access requires HTTPS or localhost.</div></div><p class="muted">Products and stock are stored on this phone using IndexedDB. Putting this app online does not upload your inventory. Back up regularly.</p></div>
+<div class="scanner" id="scanner" style="display:block"><div class="camera-wrap" id="cameraWrap"><video id="camera" playsinline muted autoplay></video><div class="camera-placeholder" id="cameraPlaceholder">📷 Camera is off<br><span>Tap “Scan Barcode” below to start</span></div><div class="scan-frame"></div><div class="scan-help">Place the barcode inside the box</div></div><div class="scan-row"><button onclick="openScanner()">📷 Scan Barcode</button><button class="secondary" onclick="stopScanner()">✕ Stop camera</button><button class="secondary" onclick="manualScan()">Enter barcode manually</button></div><div class="scan-status" id="scanStatus">Camera scanner uses your phone browser. Camera access requires HTTPS or localhost.</div><div class="scan-result" id="scanResult"><div class="muted">Scanned product</div><strong id="scanProductName"></strong><div id="scanProductCode" class="muted"></div><div class="scan-result stock-number" id="scanProductStock">0</div><div class="muted">Current quantity</div><div class="scan-actions"><button onclick="scanAdjust(-1)">➖ Decrease 1</button><button onclick="scanAdjust(1)">➕ Increase 1</button><button class="secondary" onclick="editScannedProduct()">Edit product</button></div></div></div><p class="muted">Products and stock are stored on this phone using IndexedDB. Putting this app online does not upload your inventory. Back up regularly.</p></div>
 
 <dialog id="productDlg"><h2 id="dlgTitle">Add product</h2><div class="form">
 <label>Name<input id="name"></label><label>SKU<input id="sku"></label><label>Barcode<input id="barcode"></label>
@@ -37,7 +38,7 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 
 <script>
 let db,products=[],editing=null;
-let scanStream=null,scanTimer=null,scannerRunning=false;
+let scanStream=null,scanTimer=null,scannerRunning=false,scannedProductId=null;
 const fmt=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(n||0);
 const $=id=>document.getElementById(id);
 function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open('PhoneInventoryDB',1);r.onupgradeneeded=()=>r.result.createObjectStore('products',{keyPath:'id'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
@@ -94,14 +95,14 @@ window.onafterprint=()=>{$('labels').innerHTML=''}
 window.addEventListener('pagehide',stopScanner)
 
 async function openScanner(){
-  const panel=$('scanner'); panel.style.display='block'; panel.scrollIntoView({behavior:'smooth',block:'center'});
+  const panel=$('scanner'); clearScanResult(); panel.style.display='block'; panel.scrollIntoView({behavior:'smooth',block:'center'});
   $('scanStatus').textContent='Starting rear camera…';
   if(!window.isSecureContext && location.hostname!=='localhost'){$('scanStatus').textContent='Camera access requires an https:// link (or localhost).';return}
   if(!navigator.mediaDevices?.getUserMedia){$('scanStatus').textContent='Camera access is not available in this browser. You can enter a barcode manually.';return}
   try{
     // Open the camera first, even if BarcodeDetector is unavailable, so the preview is always visible.
     scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
-    const video=$('camera'); video.srcObject=scanStream; video.muted=true; video.setAttribute('playsinline',''); video.setAttribute('autoplay','');
+    const video=$('camera'); $('cameraPlaceholder').style.display='none'; $('cameraWrap')?.classList.add('camera-live'); video.srcObject=scanStream; video.muted=true; video.setAttribute('playsinline',''); video.setAttribute('autoplay','');
     await video.play(); scannerRunning=true;
     $('scanStatus').textContent='Rear camera is on. Point it at a Code 128 barcode.';
 
@@ -123,7 +124,7 @@ async function openScanner(){
           if(codes.length){
             const value=codes[0].rawValue; stopScanner(); $('q').value=value; render();
             const found=products.find(x=>String(x.barcode)===String(value));
-            if(found){ edit(found.id); }
+            if(found){ showScanResult(found); }
             else { alert('Barcode '+value+' was read, but no matching product was found.'); clearForm(); $('barcode').value=value; productDlg.showModal(); }
             return;
           }
@@ -138,11 +139,207 @@ async function openScanner(){
     else $('scanStatus').textContent='Could not start the camera. Check browser permissions and try again.';
   }
 }
-function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').pause();$('camera').srcObject=null;$('scanner').style.display='none'}
+function stopScanner(){scannerRunning=false;if(scanTimer)clearTimeout(scanTimer);scanTimer=null;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('camera').pause();$('camera').srcObject=null;$('cameraPlaceholder').style.display='flex';$('scanner').style.display='block'}
+function showScanResult(p){scannedProductId=p.id;$('scanProductName').textContent=p.name;$('scanProductCode').textContent='SKU: '+p.sku+' • Barcode: '+p.barcode;$('scanProductStock').textContent=p.stock;$('scanResult').style.display='block';$('scanner').style.display='block';$('scanner').scrollIntoView({behavior:'smooth',block:'center'})}
+function clearScanResult(){scannedProductId=null;$('scanResult').style.display='none'}
+async function scanAdjust(delta){if(!scannedProductId)return;let p=products.find(x=>x.id===scannedProductId);if(!p)return;if(delta<0&&p.stock<1){alert('No stock available.');return}p.stock+=delta;await putAll();render();showScanResult(p)}
+function editScannedProduct(){if(scannedProductId)edit(scannedProductId)}
 
-function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)edit(p.id);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
+function manualScan(){const v=prompt('Enter barcode number:');if(v){$('q').value=v.trim();render();const p=products.find(x=>String(x.barcode)===v.trim());if(p)showScanResult(p);else{clearForm();$('barcode').value=v.trim();productDlg.showModal()}}}
 
 function backup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(products,null,2)],{type:'application/json'}));a.download='inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function restoreFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=async()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x))throw 0;products=x;await putAll();render();alert('Restored.')}catch{alert('Invalid backup')}};r.readAsText(f)}
 openDB().then(async()=>{products=await all();render()});
-</script></body></html>
+</script>
+<section class="card" id="excelTools" style="margin-top:16px">
+  <h2>📊 Excel Import / Export</h2>
+  <p style="color:#666;margin-top:-6px">Import products from .xlsx/.xls, preview them, then add or update your local inventory.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button type="button" onclick="downloadExcelTemplate()">⬇️ Download Excel Template</button>
+    <label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+      📥 Import Excel
+      <input id="excelImportInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelImport(event)">
+    </label>
+    <button type="button" onclick="exportProductsToExcel()">📤 Export Inventory</button>
+  </div>
+  <div id="excelPreview" style="margin-top:14px"></div>
+</section>
+
+
+<script>
+/* Excel import/export helpers */
+let pendingExcelRows = [];
+
+function normalizeExcelKey(k){
+  return String(k ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+}
+function excelField(row, names){
+  const map = {};
+  Object.keys(row || {}).forEach(k => map[normalizeExcelKey(k)] = row[k]);
+  for (const n of names) {
+    const v = map[normalizeExcelKey(n)];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+  }
+  return '';
+}
+function numExcel(v, fallback=0){
+  const n = Number(String(v ?? '').replace(/,/g,'').trim());
+  return Number.isFinite(n) ? n : fallback;
+}
+function makeGeneratedBarcode(index){
+  const base = String(Date.now()).slice(-7);
+  return (base + String(index).padStart(2,'0')).slice(-9);
+}
+
+function downloadExcelTemplate(){
+  if (!window.XLSX) { alert('Excel library is still loading. Please try again.'); return; }
+  const rows = [{
+    "Product Name":"Example Product",
+    "SKU":"SKU-001",
+    "Barcode":"123456789012",
+    "Quantity":10,
+    "Purchase Price":100,
+    "Selling Price":125,
+    "Low Stock":2
+  }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:24},{wch:16},{wch:18},{wch:12},{wch:16},{wch:16},{wch:12}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Products");
+  XLSX.writeFile(wb, "product-inventory-template.xlsx");
+}
+
+async function getAllProductsForExcel(){
+  if (typeof getProducts === 'function') return await getProducts();
+  if (typeof loadProducts === 'function') return await loadProducts();
+  if (typeof db !== 'undefined' && db){
+    try {
+      return await new Promise((resolve,reject)=>{
+        const tx=db.transaction(['products'],'readonly');
+        const req=tx.objectStore('products').getAll();
+        req.onsuccess=()=>resolve(req.result||[]);
+        req.onerror=()=>reject(req.error);
+      });
+    } catch(e){}
+  }
+  return [];
+}
+
+async function exportProductsToExcel(){
+  if (!window.XLSX) { alert('Excel library is still loading. Please try again.'); return; }
+  const products = await getAllProductsForExcel();
+  const rows = products.map(p => ({
+    "Product Name": p.name ?? p.productName ?? '',
+    "SKU": p.sku ?? '',
+    "Barcode": p.barcode ?? '',
+    "Quantity": Number(p.quantity ?? p.stock ?? 0),
+    "Purchase Price": Number(p.purchasePrice ?? p.costPrice ?? 0),
+    "Selling Price": Number(p.sellingPrice ?? p.salePrice ?? 0),
+    "Low Stock": Number(p.lowStock ?? p.lowStockThreshold ?? 0)
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Products");
+  XLSX.writeFile(wb, "product-inventory.xlsx");
+}
+
+function handleExcelImport(event){
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (!window.XLSX) { alert('Excel library is still loading. Please try again.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+      pendingExcelRows = raw.map((r, i) => {
+        const name = String(excelField(r,['Product Name','Name','Product'])).trim();
+        const sku = String(excelField(r,['SKU','Product SKU'])).trim();
+        const barcode = String(excelField(r,['Barcode','Bar Code','EAN','UPC'])).trim();
+        return {
+          row: i+2, name, sku, barcode,
+          quantity: Math.max(0, numExcel(excelField(r,['Quantity','Qty','Stock']),0)),
+          purchasePrice: Math.max(0, numExcel(excelField(r,['Purchase Price','Cost Price','Purchase']),0)),
+          sellingPrice: Math.max(0, numExcel(excelField(r,['Selling Price','Sale Price','MRP','Price']),0)),
+          lowStock: Math.max(0, numExcel(excelField(r,['Low Stock','Low Stock Threshold','Reorder Level']),0))
+        };
+      }).filter(r => r.name || r.sku || r.barcode);
+      renderExcelPreview();
+    } catch(err) {
+      alert('Could not read the Excel file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderExcelPreview(){
+  const el = document.getElementById('excelPreview');
+  if (!pendingExcelRows.length) {
+    el.innerHTML = '<div style="padding:12px;background:#fff4f4;border-radius:8px">No product rows found.</div>';
+    return;
+  }
+  const shown = pendingExcelRows.slice(0,50);
+  let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button type="button" onclick="saveExcelProducts('add')">➕ Add as New</button>
+    <button type="button" onclick="saveExcelProducts('upsert')">🔄 Add + Update Existing</button>
+    <button type="button" onclick="clearExcelPreview()">✕ Clear</button>
+  </div>
+  <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+  <thead><tr><th>Row</th><th>Name</th><th>SKU</th><th>Barcode</th><th>Qty</th><th>Buy</th><th>Sell</th><th>Low</th></tr></thead><tbody>`;
+  for(const r of shown){
+    html += `<tr><td>${r.row}</td><td>${escExcel(r.name)}</td><td>${escExcel(r.sku)}</td><td>${escExcel(r.barcode)}</td><td>${r.quantity}</td><td>${r.purchasePrice}</td><td>${r.sellingPrice}</td><td>${r.lowStock}</td></tr>`;
+  }
+  html += `</tbody></table></div>`;
+  if(pendingExcelRows.length>50) html += `<p>Showing first 50 of ${pendingExcelRows.length} rows.</p>`;
+  el.innerHTML = html;
+}
+function escExcel(v){
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function clearExcelPreview(){
+  pendingExcelRows=[];
+  const input=document.getElementById('excelImportInput'); if(input) input.value='';
+  document.getElementById('excelPreview').innerHTML='';
+}
+async function saveExcelProducts(mode){
+  if(!pendingExcelRows.length) return;
+  const products = await getAllProductsForExcel();
+  const bySku = new Map(products.filter(p=>p.sku).map(p=>[String(p.sku),p]));
+  const byBarcode = new Map(products.filter(p=>p.barcode).map(p=>[String(p.barcode),p]));
+  let added=0, updated=0, skipped=0, errors=[];
+  for(const r of pendingExcelRows){
+    if(!r.name && !r.sku && !r.barcode){ skipped++; continue; }
+    let existing = (r.sku && bySku.get(r.sku)) || (r.barcode && byBarcode.get(r.barcode));
+    if(existing && mode==='add'){ skipped++; continue; }
+    try{
+      const p = existing ? {...existing} : {
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+        name: r.name || 'Imported Product',
+        sku: r.sku || ('SKU-' + Date.now().toString().slice(-6)),
+        barcode: r.barcode || makeGeneratedBarcode(added+updated),
+        quantity: 0, purchasePrice: 0, sellingPrice: 0, lowStock: 0
+      };
+      p.name = r.name || p.name;
+      p.sku = r.sku || p.sku;
+      p.barcode = r.barcode || p.barcode;
+      p.quantity = r.quantity;
+      p.purchasePrice = r.purchasePrice;
+      p.sellingPrice = r.sellingPrice;
+      p.lowStock = r.lowStock;
+      if (typeof saveProduct === 'function') await saveProduct(p);
+      else if (typeof upsertProduct === 'function') await upsertProduct(p);
+      else throw new Error('Product save function not found in app');
+      if(existing) updated++; else added++;
+    }catch(e){ errors.push(`Row ${r.row}: ${e.message}`); }
+  }
+  if(typeof render === 'function') await render();
+  else if(typeof renderProducts === 'function') await renderProducts();
+  let msg=`Excel import finished.\nAdded: ${added}\nUpdated: ${updated}\nSkipped: ${skipped}`;
+  if(errors.length) msg += `\nErrors: ${errors.slice(0,5).join('\n')}`;
+  alert(msg);
+  clearExcelPreview();
+}
+</script>
+
+</body></html>
