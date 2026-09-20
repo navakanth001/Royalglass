@@ -24,9 +24,33 @@ dialog{border:0;width:min(520px,90vw)}dialog::backdrop{background:#0008}.form{di
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Inventory">
+<style id="android-app-ui">
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior-y:none}
+body{margin:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));-webkit-tap-highlight-color:transparent}
+button,input,select{min-height:44px;font-size:16px;touch-action:manipulation}
+button{min-width:44px}
+@media(max-width:700px){
+  .wrap{width:100%;box-sizing:border-box}
+  header>div:last-child{width:100%;flex-wrap:wrap}
+  header>div:last-child button{flex:1 1 0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .toolbar{align-items:stretch}
+  .toolbar>input{width:100%;flex-basis:100%}
+  .toolbar>button,.toolbar>.print-settings{width:100%}
+  .print-settings{display:flex;gap:8px;flex-wrap:wrap}
+  .print-settings label{flex:1 1 140px}
+  table{min-width:720px}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media(max-width:430px){
+  .grid{gap:8px}
+  .card{padding:12px}
+  .metric{font-size:26px}
+}
+</style>
 </head>
 <body><div class="wrap">
-<header><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
+<header style="position:sticky;top:0;z-index:20;background:#f5f7fa;padding-top:8px;padding-bottom:10px"><div><h1>Product Inventory</h1><div class="muted">Phone storage • barcode inventory</div></div><div style="display:flex;gap:8px;align-items:center"><button onclick="openScanner()">📷 Scan Barcode</button><button onclick="productDlg.showModal();clearForm()">＋ Add product</button></header>
 <div class="grid">
 <div class="card"><div class="muted">Products</div><div class="metric" id="mP">0</div></div>
 <div class="card"><div class="muted">Units</div><div class="metric" id="mU">0</div></div>
@@ -511,4 +535,11 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+<script id="android-back-button">
+window.addEventListener('popstate',function(){
+  const dlg=document.getElementById('productDlg');
+  if(dlg&&dlg.open){dlg.close();return;}
+  if(typeof scannerRunning!=='undefined'&&scannerRunning&&typeof stopScanner==='function')stopScanner();
+});
+</script>
 </body></html>
